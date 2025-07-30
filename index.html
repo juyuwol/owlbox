@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>카드 설정 도우미</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="coloris.css">
+<script type="module" src="canvaskit.js"></script>
+<script type="module" src="image.js"></script>
+<script type="module" src="generator.js"></script>
+<script src="coloris.js"></script>
+</head>
+<body>
+<h1>카드 설정 도우미</h1>
+<p class="description"><a href="https://github.com/juyuwol/owlbox">부엉이 사서함</a> 사용자를 위한 카드 설정 도우미입니다. 출력 결과를 미리 보기로 확인해 가며 설정을 조정하고, 그에 따라 모듈 파일을 생성할 수 있습니다.</p>
+<form id="generator" class="generator" autocomplete="off">
+  <p class="preview"><img id="preview" class="preview-image" src="fallback.png" alt="미리 보기" width="900" height="472"></p>
+  <fieldset class="fonts">
+    <legend>글꼴</legend>
+    <p>
+      <button id="remove" type="button" disabled="">삭제</button>
+      <button id="reset" type="button" disabled="">리셋</button>
+    </p>
+    <p>
+      <input id="file" type="file" multiple="">
+      <button id="upload" type="button" disabled="">추가</button>
+    </p>
+    <ol id="fonts">
+      <li>
+        <label><input name="font" type="checkbox" value="NotoSansKR-Regular.woff2"> NotoSansKR-Regular.woff2</label>
+        <button data-dir="up" type="button" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+        <button data-dir="down" type="button" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+      </li>
+      <li>
+        <label><input name="font" type="checkbox" value="NotoColorEmoji.woff2"> NotoColorEmoji.woff2</label>
+        <button data-dir="up" type="button" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+        <button data-dir="down" type="button" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+      </li>
+    </ol>
+  </fieldset>
+  <div class="fields">
+    <p><label>배경 색상: <input name="backgroundColor" type="text" value="#ffffff" data-coloris=""></label></p>
+    <p><label>프레임 색상: <input name="frameColor" type="text" value="#bbbbbb" data-coloris=""></label></p>
+    <p><label>글자 색상: <input name="textColor" type="text" value="#000000" data-coloris=""></label></p>
+    <p><label>글자 크기: <input name="fontSize" type="number" min="1" value="28"> px</label></p>
+    <p><label>행간: <input name="lineHeight" type="number" min="100" value="160"> %</label></p>
+    <p><label>프레임 가로줄 두께: <input name="horizontalFrameThickness" type="number" min="0" value="42"> px</label></p>
+    <p><label>프레임 세로줄 두께: <input name="verticalFrameThickness" type="number" min="0" value="28"> px</label></p>
+    <p><label>프레임 X 좌표: <input name="frameLeft" type="number" min="0" value="0"> px</label></p>
+    <p><label>프레임 Y 좌표: <input name="frameTop" type="number" min="0" value="0"> px</label></p>
+    <p><label>글 상자 X 좌표: <input name="contentLeft" type="number" min="0" value="70"> px</label></p>
+    <p><label>글 상자 Y 좌표: <input name="minContentTop" type="number" min="0" value="84"> px</label></p>
+    <p><label>미리보기 내용:<br>
+    <textarea name="message" cols="40" rows="4">프리벳 가 4번지에 사는 더즐리 부부는 자신들이 정상적이라는 것을 아주 자랑스럽게 여기는 사람들이었다.</textarea></label></p>
+    <p><button name="submit" type="submit" disabled="">입력</button></p>
+  </div>
+</form>
+<h2>설정 파일 출력</h2>
+<div class="output">
+  <textarea id="output" class="code" cols="40" rows="20" readonly="" autocomplete="off">export const fonts = [
+  "NotoSansKR-Regular.woff2",
+  "NotoColorEmoji.woff2",
+];
+
+export const style = {
+  backgroundColor: [0xff, 0xff, 0xff],
+  frameColor: [0xbb, 0xbb, 0xbb],
+  textColor: [0x00, 0x00, 0x00],
+  fontSize: 28,
+  lineHeight: 1.6,
+  horizontalFrameThickness: 42,
+  verticalFrameThickness: 28,
+  frameLeft: 0,
+  frameTop: 0,
+  contentLeft: 70,
+  minContentTop: 84,
+};
+</textarea>
+  <div>
+    <p>글 상자의 코드를 복사하거나 파일을 <a id="download" download="card.js">다운로드</a>하여, 사서함 소스 리포지토리의 <code>layouts/card.js</code> 모듈 파일을 덮어씌웁니다.</p>
+    <p>사용한 폰트 파일은 모두 <code>fonts</code> 디렉토리에 업로드합니다.</p>
+  </div>
+</div>
+<footer><small>© 2025 주유월 &lt;<a href="mailto:ju@yuwol.pe.kr">ju@yuwol.pe.kr</a>&gt;</small></footer>
+<template id="font-item">
+  <li>
+    <label><input name="font" type="checkbox"> </label>
+    <button data-dir="up" type="button" aria-label="위로"><span aria-hidden="">↑</span></button>
+    <button data-dir="down" type="button" aria-label="아래로"><span aria-hidden="">↓</span></button>
+  </li>
+</template>
+</body>
+</html>
