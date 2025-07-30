@@ -1,0 +1,16 @@
+{
+  "activated": true,
+  "notify": true,
+  "email": null,
+  "preferredSender": "google",
+  "maxLength": 1000,
+  "perPage": 20,
+  "timeOffset": "+09:00",
+  "title": "부엉이 사서함",
+  "description": "운영자에게 익명의 쪽지를 보내 보세요.",
+  "master": "운영자",
+  "footerLabel": "운영자 @Twitter",
+  "footerURL": "https://x.com/Twitter",
+  "about": "<p>개인 익명 쪽지함 겸 답장 게시판입니다.</p>",
+  "showLogin": true
+}

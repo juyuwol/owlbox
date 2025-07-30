@@ -1,0 +1,13 @@
+{
+  "name": "owlbox",
+  "displayName": "OwlBox",
+  "version": "1.0.0",
+  "repository": "https://github.com/juyuwol/owlbox",
+  "license": "Zlib",
+  "author": "Ju Yuwol <ju@yuwol.pe.kr>",
+  "type": "module",
+  "dependencies": {
+    "@vercel/functions": "^2.2.5",
+    "canvaskit-wasm": "0.40.0"
+  }
+}

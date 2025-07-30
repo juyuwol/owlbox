@@ -1,0 +1,59 @@
+import { respondError, updateJSON } from '../src/vercel.js';
+
+const EMAIL = /^.+@.+$/; // Loose check
+const NUMOFFSET = /^[+\-](?:[01]\d|2[0-3]):[0-5]\d$/;
+
+const validate = {
+  activated: (value) => {
+    if ((value === true) || (value === false)) return value;
+    throw new Error("'activated' must be true or false.");
+  },
+  notify: (value) => {
+    if ((value === true) || (value === false)) return value;
+    throw new Error("'notify' must be true or false.");
+  },
+  email: (value) => {
+    if ((value === null) || (value === '')) return null;
+    if ((typeof value === 'string') && EMAIL.test(value)) return value;
+    throw new Error("'email' must be an email address if exists.");
+  },
+  maxLength: (value) => {
+    if ((value <= 1000) && (value >= 1) && Number.isInteger(value)) return value;
+    throw new Error("'maxLength' must be an integer between 1 to 1000.");
+  },
+  perPage: (value) => { // Limit to prevent a malicious input
+    if ((value >= 1) && (value <= 0x7fff) && Number.isInteger(value)) return value;
+    throw new Error("'perPage' must be an integer between 1 to 32767.");
+  },
+  timeOffset: (value) => {
+    if ((typeof value === 'string') && (NUMOFFSET.test(value) || (value === 'Z'))) return value;
+    throw new Error("'timeOffset' must be a RFC 3339 time-offset.");
+  },
+  title: (value) => {
+    if ((typeof value === 'string') && (value.trim().length > 0)) return value;
+    throw new Error("'title' must include at least one non-whitespace character.");
+  },
+};
+
+export async function POST(req) {
+  let updates;
+  try {
+    updates = await req.json();
+    for (const key in validate) {
+      const value = updates[key];
+      if (value === undefined) continue;
+      updates[key] = validate[key](value);
+    }
+  } catch (error) {
+    return respondError(400, error.message);
+  }
+  try {
+    await updateJSON('config.json', updates, 'Update config', Object.assign);
+  } catch (error) {
+    return respondError(500, error.message);
+  }
+  return new Response(null, {
+    status: 204,
+    headers: { 'cache-control': 'no-store' },
+  });
+}

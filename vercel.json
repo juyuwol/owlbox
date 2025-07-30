@@ -1,0 +1,91 @@
+{
+  "buildCommand": "node src/build.js --output public --production",
+  "outputDirectory": "public",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "max-age=300, s-maxage=60"
+        }
+      ]
+    },
+    {
+      "source": "/(.+).png",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "max-age=604800, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/box/(replied.json|settings.html)",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(lists/.+|search/)",
+      "headers": [
+        {
+          "key": "x-robots-tag",
+          "value": "noindex"
+        }
+      ]
+    },
+    {
+      "source": "/favicon.ico",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "max-age=86400"
+        },
+        {
+          "key": "content-type",
+          "value": "image/png"
+        }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "max-age=86400"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/(li|po)sts{/}?",
+      "destination": "/lists/1.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path(box|search)",
+      "destination": "/:path/",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/submit",
+      "destination": "/api/submit"
+    },
+    {
+      "source": "/box/:path{.json}?",
+      "destination": "/api/:path"
+    }
+  ],
+  "functions": {
+    "api/reply.js": {
+      "includeFiles": "node_modules/canvaskit-wasm/bin/canvaskit.wasm"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+User-agent: AhrefsBot
+User-agent: Amazonbot
+User-agent: Applebot
+User-agent: Bytespider
+User-agent: ClaudeBot
+User-agent: GPTBot
+User-agent: Googlebot-Image
+User-agent: PetalBot
+User-agent: SemrushBot
+User-agent: YaK
+User-agent: dotbot
+User-agent: facebookexternalhit
+User-agent: trendictionbot
+Disallow: /
