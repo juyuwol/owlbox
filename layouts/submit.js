@@ -1,7 +1,9 @@
+import site from '../config.js';
 import confirm from './parts/confirm.js';
 import render from './status.js';
 import { DO_NOT_SEND, escapeHTML as h, formatDateTime } from './util.js';
 
+const { baseURL } = site;
 const scripts = ['/assets/confirm.js'];
 const beforeBodyEnd = confirm('보내려던 쪽지');
 const details = {
@@ -31,21 +33,19 @@ const details = {
 
 /**
  * @param {{ id: string, sent: string, message: string }} post
- * @param {Object} site
  * @returns {string}
  */
-export function renderEmail({ id, sent, message }, site) {
+export function renderEmail({ id, sent, message }) {
   return `\
 <p style="white-space: pre-wrap;">${h(message)}</p>
-<p>- <time datetime="${sent}">${formatDateTime(sent)} (ID: ${id})</p>
-<p><a href="${site.baseURL}/box/">답글 쓰기</a></p>`;
+<p>- <time datetime="${sent}">${formatDateTime(sent)}</time> (ID: ${id})</p>
+<p><a href="${baseURL}/box/">답글 쓰기</a></p>`;
 }
 
 /**
  * @param {number} status
- * @param {Object} site
  * @returns {string}
  */
-export function renderError(status, site) {
+export function renderError(status) {
   return render(details[status], site);
 }

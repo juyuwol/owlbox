@@ -3,6 +3,7 @@ import { renderEmail, renderError } from '../layouts/submit.js';
 import { KV_KEY, http, kv, local } from '../src/vercel.js';
 import site from '../config.js';
 
+const { maxLength } = site;
 const { env } = process;
 const deactivated = (site.activated !== true) || !('KV_REST_API_URL' in env);
 
@@ -36,14 +37,14 @@ const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
   return (post) => request(endpoint, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ [body]: renderEmail(post, site), ...base }),
+    body: JSON.stringify({ [body]: renderEmail(post), ...base }),
   }, 'Failed to send the email.');
 })();
 
 const notify = (sendEmail !== null);
 
 function respondError(status, headers) {
-  return new Response(renderError(status, site), {
+  return new Response(renderError(status), {
     status,
     headers: {
       'cache-control': 'no-store',
@@ -63,13 +64,8 @@ export const POST = deactivated ? (() => respondError(404)) : async (req) => {
     const form = await req.formData();
     const value = form.get('message');
     if (value === null) throw new Error();
-    const message = value.trimEnd().replaceAll('\r\n', '\n');
-    const { length } = message;
-    if ((length > 0) && (length <= site.maxLength)) {
-      post.message = message;
-    } else {
-      throw new Error();
-    }
+    const { length } = post.message = value.trimEnd().replaceAll('\r\n', '\n');
+    if ((length === 0) && (length > maxLength)) throw new Error();
   } catch (e) {
     return respondError(400);
   }
