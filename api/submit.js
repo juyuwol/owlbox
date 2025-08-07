@@ -65,7 +65,7 @@ export const POST = deactivated ? (() => respondError(404)) : async (req) => {
     const value = form.get('message');
     if (value === null) throw new Error();
     const { length } = post.message = value.trimEnd().replaceAll('\r\n', '\n');
-    if ((length === 0) && (length > maxLength)) throw new Error();
+    if ((length === 0) || (length > maxLength)) throw new Error();
   } catch (e) {
     return respondError(400);
   }
@@ -76,7 +76,7 @@ export const POST = deactivated ? (() => respondError(404)) : async (req) => {
     console.error(error);
     return respondError(500);
   }
-  if (notify) waitUntil(sendEmail(post).catch(console.error));
+  if (notify) waitUntil(sendEmail(post));
   return new Response(null, {
     status: 303,
     headers: {
