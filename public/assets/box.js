@@ -22,17 +22,17 @@ const {
   deleteOK,
 } = JSON.parse(document.getElementById('box-config').text);
 
-const fragment = document.getElementById('box-content').content;
-const content = fragment.firstElementChild;
-const refreshButton = fragment.getElementById('refresh');
-const deleteButton = fragment.getElementById('delete');
-const statusBlock = fragment.getElementById('box-status');
-const totalText = fragment.getElementById('box-total').lastChild;
-const list = fragment.getElementById('box-list');
+const { content } = document.getElementById('box-content');
+const contentBlock = content.firstElementChild;
+const refreshButton = content.getElementById('refresh');
+const deleteButton = content.getElementById('delete');
+const statusLine = content.getElementById('box-status');
+const totalText = content.getElementById('box-total').lastChild;
+const list = content.getElementById('box-list');
 const loadingLine = document.getElementById('box-loading');
-const tabForm = document.getElementById('tab');
-const tabList = tabForm.elements.tab;
-const availables = [...tabList].filter(e => !e.disabled);
+const tabList = document.getElementById('tab');
+const tabRadios = tabList.elements.tab;
+const tabRadiosAvailable = [...tabRadios].filter(e => !e.disabled);
 
 const createBlock = {
   unreplied: createUnrepliedCreator(createPublishedCreator()),
@@ -40,40 +40,48 @@ const createBlock = {
   selected: createSelectedCreator(),
 };
 
+const slicemap = (
+  ('map' in Iterator.prototype) ?
+  (iterator, drop, take, map) => iterator.drop(drop).take(take).map(map) :
+  function* (iterator, drop, take, map) {
+    for (; drop > 0; --drop) iterator.next();
+    for (const value of iterator) {
+      yield map(value);
+      if (--take === 0) break;
+    }
+  }
+);
+
 document.addEventListener('box-render', () => {
   let blocks = pages.get(page);
   if (blocks === undefined) {
     const start = (page - 1) * perPage;
-    blocks = (
-      ('map' in Iterator.prototype) ?
-      posts.values().drop(start).take(perPage) :
-      [...posts.values()].slice(start, start + perPage)
-    ).map(createBlock[tab]);
+    blocks = slicemap(posts.values(), start, perPage, createBlock[tab]);
   }
   list.replaceChildren(...blocks);
-  statusBlock.setAttribute('tabindex', '-1');
-  statusBlock.focus({ preventScroll: true });
-  statusBlock.blur();
-  statusBlock.removeAttribute('tabindex');
-  const y = statusBlock.getBoundingClientRect().y - 8;
+  statusLine.setAttribute('tabindex', '-1');
+  statusLine.focus({ preventScroll: true });
+  statusLine.blur();
+  statusLine.removeAttribute('tabindex');
+  const y = statusLine.getBoundingClientRect().y - 8;
   if (y < 0) window.scrollBy(0, y);
 });
 
 definePager();
 defineCheckbox();
 
-if (tabList.value === '') {
-  availables[0].checked = true;
+if (tabRadios.value === '') {
+  tabRadiosAvailable[0].checked = true;
 }
 
-(refreshButton.onclick = tabForm.onchange = async () => {
-  for (const e of availables) {
-    e.disabled = true;
+(refreshButton.onclick = tabList.onchange = async () => {
+  for (const radio of tabRadiosAvailable) {
+    radio.disabled = true;
   }
-  content.remove();
-  tabForm.after(loadingLine);
+  contentBlock.remove();
+  tabList.after(loadingLine);
   posts = new Map();
-  tab = tabList.value;
+  tab = tabRadios.value;
   selectedIds.clear();
   initializeDeleteButton();
   try {
@@ -86,16 +94,16 @@ if (tabList.value === '') {
       post.replied = normalizeDateTime(replied);
     }
   } catch (error) {
-    for (const e of tabList) {
-      e.checked = false;
+    for (const radio of tabRadios) {
+      radio.checked = false;
     }
     loadingLine.remove();
     return window.alert(error.message);
   }
   initializePage();
-  loadingLine.replaceWith(content);
-  for (const e of availables) {
-    e.disabled = false;
+  loadingLine.replaceWith(contentBlock);
+  for (const radio of tabRadiosAvailable) {
+    radio.disabled = false;
   }
 })();
 
@@ -111,15 +119,15 @@ function createPublishedCreator() {
     throw new Error();
   }
 
+  const template = document.getElementById('box-published').content.firstElementChild;
   const tweetTemplate = document.getElementById('box-published-tweet').content.firstElementChild;
   const retryTemplate = document.getElementById('box-published-retry').content.firstElementChild;
-  const blockTemplate = document.getElementById('box-published').content.firstElementChild;
-  const sentText = blockTemplate.querySelector('.sent').lastChild;
-  const messageText = blockTemplate.querySelector('.message').lastChild;
-  const repliedText = blockTemplate.querySelector('.replied').lastChild;
-  const replyText = blockTemplate.querySelector('.reply').lastChild;
-  const image = blockTemplate.querySelector('.image');
-  const link = blockTemplate.querySelector('.link');
+  const sentText = template.querySelector('.sent').lastChild;
+  const messageText = template.querySelector('.message').lastChild;
+  const repliedText = template.querySelector('.replied').lastChild;
+  const replyText = template.querySelector('.reply').lastChild;
+  const image = template.querySelector('.image');
+  const link = template.querySelector('.link');
 
   return async ({ id, reply, message, sent }, res) => {
     const loading = res.blob();
@@ -131,24 +139,24 @@ function createPublishedCreator() {
 
     const url = link.href;
     const tweetLine = tweetTemplate.cloneNode(true);
-    const tweet = tweetLine.querySelector('.tweet');
-    tweet.search = new URLSearchParams({ text: `${reply} ${url}` });
+    const tweetLink = tweetLine.querySelector('.tweet');
+    tweetLink.search = new URLSearchParams({ text: `${reply} ${url}` });
     image.src = URL.createObjectURL(await loading);
 
-    const block = blockTemplate.cloneNode(true);
-    const loadingBar = block.querySelector('.loading');
+    const block = template.cloneNode(true);
+    const loadingLine = block.querySelector('.loading');
 
-    const enable = () => loadingBar.replaceWith(tweetLine);
+    const enable = () => loadingLine.replaceWith(tweetLine);
     untilPublished(url, 10, 10).then(enable).catch(() => {
       const retry = retryTemplate.cloneNode(true);
       const button = retry.querySelector('.retry');
-      loadingBar.replaceWith(retry);
+      loadingLine.replaceWith(retry);
       button.onclick = async () => {
-        retry.replaceWith(loadingBar);
+        retry.replaceWith(loadingLine);
         try {
           await untilPublished(url, 0, 10);
         } catch (e) {
-          return loadingBar.replaceWith(retry);
+          return loadingLine.replaceWith(retry);
         }
         enable();
         retry.replaceWith(tweetLine);
@@ -163,23 +171,21 @@ function createUnrepliedCreator(createPublished) {
   async function submit(event) {
     event.preventDefault();
     const form = event.currentTarget;
-    const { elements } = form;
-    const { message } = elements;
-    if (message.textLength > 1000) {
-      const { oninput } = message;
-      message.maxLength = 1000;
+    const { message: messageBox, reply: replyBox } = form.elements;
+    if (messageBox.textLength > 1000) {
+      const { oninput } = messageBox;
+      messageBox.maxLength = 1000;
       form.reportValidity();
-      message.oninput = () => {
-        message.removeAttribute('maxlength');
-        (message.oninput = oninput)();
+      messageBox.oninput = () => {
+        messageBox.removeAttribute('maxlength');
+        (messageBox.oninput = oninput)();
       };
       return;
     }
     if (!window.confirm(unrepliedConfirm)) return;
-    const { reply } = elements;
     const button = form.querySelector('[type=submit]');
     form.onsubmit = (event) => event.preventDefault();
-    message.readOnly = reply.readOnly = button.disabled = true;
+    messageBox.readOnly = replyBox.readOnly = button.disabled = true;
     try {
       const data = Object.fromEntries(new FormData(form));
       const res = await fetch(form.action, {
@@ -198,7 +204,7 @@ function createUnrepliedCreator(createPublished) {
       window.alert(unrepliedOK);
     } catch (error) {
       form.onsubmit = submit;
-      message.readOnly = reply.readOnly = button.disabled = false;
+      messageBox.readOnly = replyBox.readOnly = button.disabled = false;
       window.alert(error.message);
     }
   }
@@ -211,12 +217,12 @@ function createUnrepliedCreator(createPublished) {
     sentText.data = sentInput.value = post.sent;
     const id = idInput.value = post.id;
     const form = template.cloneNode(true);
-    const count = form.querySelector('.count').lastChild;
-    const { message } = form.elements;
-    message.value = post.message;
-    (message.oninput = () => void (count.data = `${message.textLength}`))();
-    form.onsubmit = submit;
+    const countText = form.querySelector('.count').lastChild;
+    const messageBox = form.elements.message;
     form.setAttribute('id', id);
+    form.onsubmit = submit;
+    messageBox.value = post.message;
+    (messageBox.oninput = () => void (countText.data = `${messageBox.textLength}`))();
     return form;
   };
 }
@@ -227,9 +233,9 @@ function createRepliedCreator() {
     if (!window.confirm(repliedConfirm)) return;
     const form = event.currentTarget;
     const button = form.querySelector('[type=submit]');
-    const { reply } = form.elements;
+    const replyBox = form.elements.reply;
     form.onsubmit = (event) => event.preventDefault();
-    reply.readOnly = button.disabled = true;
+    replyBox.readOnly = button.disabled = true;
     try {
       const data = Object.fromEntries(new FormData(form));
       const { headers } = await fetch(form.action, {
@@ -247,7 +253,7 @@ function createRepliedCreator() {
       window.alert(error.message);
     } finally {
       form.onsubmit = submit;
-      reply.readOnly = button.disabled = false;
+      replyBox.readOnly = button.disabled = false;
     }
   }
 
@@ -257,7 +263,7 @@ function createRepliedCreator() {
   const messageText = template.querySelector('.message').lastChild;
   const repliedText = template.querySelector('.replied').lastChild;
   const replyText = template.querySelector('.reply').lastChild;
-  const { id: idInput, reply: replyInput } = template.elements;
+  const { id: idInput, reply: replyBox } = template.elements;
 
   return (post) => {
     const id = idInput.value = post.id;
@@ -265,7 +271,7 @@ function createRepliedCreator() {
     sentText.data = post.sent;
     messageText.data = post.message;
     repliedText.data = post.replied;
-    replyInput.value = replyText.data = post.reply;
+    replyBox.value = replyText.data = post.reply;
     const form = template.cloneNode(true);
     form.setAttribute('id', id);
     form.onsubmit = submit;

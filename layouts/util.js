@@ -1,18 +1,13 @@
 class Block extends Array {
-  /**
-   * @param {number} space
-   * @returns {Block}
-   */
+  space = 0;
+
   render(space) {
-    if (space === 0) return this;
-    const gap = ' '.repeat(space);
-    const block = this.map(e => (gap + e));
-    block[0] = this[0];
-    return block;
+    if (space > 0) this.space += space;
+    return this;
   }
 
   toString() {
-    return this.join('\n');
+    return this.join('\n' + ' '.repeat(this.space));
   }
 }
 
@@ -46,7 +41,9 @@ export function escapeElement(value, fallback = '') {
 }
 
 export function formatDateTime(datetime) {
-  const date = `${datetime.slice(0, 4)}. ${+datetime.slice(5, 7)}. ${+datetime.slice(8, 10)}.`;
+  const month = +datetime.slice(5, 7);
+  const day = +datetime.slice(8, 10);
+  const date = `${datetime.slice(0, 4)}. ${month}. ${day}.`;
   if (datetime.length === 10) return date;
   return `${date} ${datetime.slice(11, 19)}`;
 }
@@ -59,13 +56,24 @@ export function pretty(strs, ...exps) {
     const { value, done } = values.next();
     if (str.length > 0) {
       const lines = str.split('\n');
-      block[i] += lines[0];
-      if (lines.length > 1) i = block.push(...lines.values().drop(1)) - 1;
+      const values = lines.values();
+      block[i] += values.next().value;
+      if (lines.length > 1) {
+        i = block.push(...values) - 1;
+      }
     }
     if (done === true) continue;
     if (value instanceof Block) {
-      block[i] += value[0];
-      if (value.length > 1) i = block.push(...value.values().drop(1)) - 1;
+      let values = value.values();
+      block[i] += values.next().value;
+      if (value.length > 1) {
+        const { space } = value;
+        if (space > 0) {
+          const gap = ' '.repeat(space);
+          values = values.map(e => gap + e);
+        }
+        i = block.push(...values) - 1;
+      }
     } else {
       block[i] += value;
     }

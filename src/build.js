@@ -6,7 +6,6 @@ import packageJSON from '../package.json' with { type: 'json' };
 
 const normalize = (sep === '/') ? (e => e) : (e => e.replaceAll('/', sep));
 
-// Parse CLI arguments
 const { output, production = false, proxy = false } = parseArgs({
   options: {
     output    : { type: 'string', short: 'o' },
@@ -19,7 +18,7 @@ const outputDir = resolve(output);
 const sourceDir = process.cwd();
 
 const loadingConfig = readJSONFile(sourceDir + sep + 'config.json');
-const loadingLayouts = import(pathToFileURL(sourceDir) + '/layouts/index.js');
+const loadingLayouts = import(`${pathToFileURL(sourceDir)}/layouts/index.js`);
 const makingDirs = (async () => {
   const options = { recursive: true };
   if (proxy) {
@@ -33,8 +32,9 @@ const makingDirs = (async () => {
     await rm(outputDir, options).catch(ignoreNotFound);
     await cp(staticDir, outputDir, options);
   }
-  const dirs = new Set(['box', 'lists', 'posts', 'submit']);
-  const promises = [...dirs.values().map((dir) => mkdir(outputDir + sep + dir, options))];
+  const fixedDirs = ['box', 'lists', 'posts', 'submit'];
+  const promises = fixedDirs.map(e => mkdir(outputDir + sep + e, options));
+  const dirs = new Set(fixedDirs);
   const { pages } = await loadingLayouts;
   for (const path in pages) {
     const index = path.lastIndexOf('/');
@@ -52,9 +52,8 @@ const makingDirs = (async () => {
 const site = await loadingConfig;
 const offset = site.timeOffset;
 const offsetMilliseconds = -Date.parse('1970-01-01T00:00:00' + offset);
-const baseURL = site.baseURL ??= ((host) => (
-  (host !== undefined) ? `https://${host}` : ''
-))(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+const baseURL = site.baseURL ??= (e => (e !== undefined) ? `https://${e}` : ''
+)(process.env.VERCEL_PROJECT_PRODUCTION_URL);
 
 site.timeOffsetMilliseconds = offsetMilliseconds;
 site.generator = (({ displayName, version, repository }) => ({
@@ -108,10 +107,10 @@ const [ proxiedPosts, unproxiedPosts ] = await (() => {
     readFile(proxiedFile, 'utf-8').then((text) => {
       const posts = [];
       const end = text.length;
-      for (let i = 0, p = 0; p < end; p = i + 1) {
-        i = text.indexOf('\n', p);
-        if (i === -1) i = end;
-        const data = JSON.parse(text.slice(p, i));
+      for (let i = 0, k = 0; i < end; i = k + 1) {
+        k = text.indexOf('\n', i);
+        if (k === -1) k = end;
+        const data = JSON.parse(text.slice(i, k));
         posts.push(createPost(data));
       }
       return posts;
@@ -156,10 +155,8 @@ if (proxy) {
 } else {
   {
     const file = outputDir + normalize('/box/replied.json');
-    writeFile(file, JSON.stringify(unproxiedPosts.map((post) => {
-      const { id, message, sent, reply, replied } = post;
-      return { id, message, sent, reply, replied };
-    })) + '\n');
+    const keys = ['id', 'message', 'sent', 'reply', 'replied', 'color'];
+    writeFile(file, JSON.stringify(unproxiedPosts, keys) + '\n');
   }
 
   for (const path in pages) {
