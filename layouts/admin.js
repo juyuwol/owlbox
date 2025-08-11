@@ -1,5 +1,5 @@
 import render from './base.js';
-import { pretty } from './util.js';
+import { prettify, pretty } from './util.js';
 
 const { VERCEL_GIT_REPO_OWNER: owner, VERCEL_GIT_REPO_SLUG: repo } = process.env;
 const styles = ['/assets/admin.css'];
@@ -12,7 +12,7 @@ const labels = {
 const paths = Object.keys(labels);
 
 let uninitialized = true;
-let manual = ''; // Major version branch URL
+let /** Major version branch URL */ manual = '';
 
 export default (page, site, content) => {
   if (uninitialized) {
@@ -29,17 +29,18 @@ export default (page, site, content) => {
     <p class="admin-nav-heading">바로 가기</p>
     <ul class="admin-nav-list">
       <li class="admin-nav-item"><a href="https://vercel.com/dashboard">Vercel 대시보드</a></li>
-      <li class="admin-nav-item"><a href="https://github.com/${owner}/${repo}">GitHub 리포지토리</a></li>
+      <li class="admin-nav-item">\
+<a href="https://github.com/${owner}/${repo}">GitHub 리포지토리</a></li>
       <li class="admin-nav-item"><a href="${manual}">버전 매뉴얼</a></li>
     </ul>
   </div>
   <div class="admin-nav-section">
     <p class="admin-nav-heading">관리 메뉴</p>
-    <ul class="admin-nav-list">${
-    pretty(paths.map((path) => (path === current) ? `
-      <li class="admin-nav-item"><b>${labels[path]}</b></li>` : `
-      <li class="admin-nav-item"><a href="${path}">${labels[path]}</a></li>`
-    ))}
+    <ul class="admin-nav-list">${prettify(paths.reduce((code, path) => code + `
+      <li class="admin-nav-item">${(path === current) ?
+        `<b>${labels[path]}</b>` :
+        `<a href="${path}">${labels[path]}</a>`
+      }</li>`, ''))}
     </ul>
   </div>
 </nav>

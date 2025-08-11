@@ -4,9 +4,9 @@ export const fonts = [
 ];
 
 export const style = {
-  backgroundColor: [0xff, 0xff, 0xff],
-  frameColor: [0xbb, 0xbb, 0xbb],
-  textColor: [0x00, 0x00, 0x00],
+  backgroundColor: [0xff, 0xff, 0xff], // #ffffff
+  frameColor: [0xbb, 0xbb, 0xbb], // #bbbbbb
+  textColor: [0x00, 0x00, 0x00], // #000000
   fontSize: 28,
   lineHeight: 1.6,
   horizontalFrameThickness: 42,

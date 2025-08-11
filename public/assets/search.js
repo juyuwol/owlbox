@@ -219,8 +219,7 @@ function formatDatetime(datetime) {
   const month = +datetime.slice(5, 7);
   const day = +datetime.slice(8, 10);
   const date = `${datetime.slice(0, 4)}. ${month}. ${day}.`;
-  if (datetime.length === 10) return date;
-  return `${date} ${datetime.slice(11, 19)}`;
+  return (datetime.length > 10) ? `${date} ${datetime.slice(11, 19)}` : date;
 }
 
 function formatTitle(datetime) {

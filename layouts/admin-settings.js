@@ -1,5 +1,5 @@
 import render from './admin.js';
-import { escapeElement as e, escapeHTML as h, pretty } from './util.js';
+import { escapeElement as e, escapeHTML as h, prettify } from './util.js';
 
 export default (page, site) => {
   const { env } = process;
@@ -9,7 +9,7 @@ export default (page, site) => {
   const sendable = (availableGoogle || availableResend) && (typeof email === 'string');
   const storable = ('KV_REST_API_URL' in env);
   page.scriptsModule = ['/assets/error.js', '/assets/settings.js'];
-  return render(page, site, pretty`\
+  return render(page, site, prettify(`\
 <form id="settings" action="/box/config" method="post" autocomplete="off" \
 data-ok="설정을 변경했습니다. 적용되기까지 다소 시간이 걸릴 수 있습니다." \
 data-schema='${JSON.stringify({
@@ -36,7 +36,7 @@ storable ? '\
 <label class="label-checkbox">\
 <input name="notify" type="checkbox"${(site.notify === true) ? ' checked=""' : ''}${
 sendable ? '' : ' aria-describedby="notify-description"'}> \
-이메일 알림 받기</label>${sendable ? '' : pretty`<br>
+이메일 알림 받기</label>${sendable ? '' : `<br>
     <span id="notify-description" class="admin-description">\
 프로젝트에 이메일 발송을 위한 환경 변수를 설정하지 않거나, \
 이메일 주소를 설정하지 않으면, 활성 상태로 설정해도 무시됩니다.\
@@ -165,5 +165,5 @@ Resend\
 </li>
   </ul>
   <p class="settings-submit"><button id="settings-submit" type="submit" disabled="">변경</button></p>
-</form>`);
+</form>`));
 };

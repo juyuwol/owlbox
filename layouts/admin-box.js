@@ -1,12 +1,12 @@
 import render from './admin.js';
-import { pretty } from './util.js';
+import { prettify } from './util.js';
 
 export default (page, site) => {
   const checkbox = '<p><label class="label-checkbox"><input type="checkbox"> 선택</label></p>';
   const dot3 = '<span class="dot">.</span>'.repeat(3);
   const storable = ('KV_REST_API_URL' in process.env);
   page.scriptsModule = ['/assets/error.js', '/assets/box.js'];
-  page.beforeBodyEnd = pretty`\
+  page.beforeBodyEnd = prettify(`\
 <script id="box-config" type="application/json">${JSON.stringify({
   perPage: site.perPage,
   offset: site.timeOffset,
@@ -96,8 +96,8 @@ export default (page, site) => {
     <p class="replied"> </p>
     <pre class="reply"> </pre>
   </div>
-</template>`;
-  return render(page, site, pretty`\
+</template>`);
+  return render(page, site, prettify(`\
 <form id="tab" class="box-tabs">
   <label class="box-tab label-checkbox">\
 <input name="tab" type="radio" value="unreplied" ${
@@ -106,5 +106,5 @@ storable ? 'checked' : 'disabled'}=""> 답장</label>
 <input name="tab" type="radio" value="replied"${
 storable ? '' : ' checked=""'}> 수정</label>
 </form>
-<p id="box-loading">로드 중${dot3}</p>`);
+<p id="box-loading">로드 중${dot3}</p>`));
 };

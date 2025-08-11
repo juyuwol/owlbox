@@ -28,6 +28,7 @@ export default (page, site) => {
 ${searchForm}
 <div id="search-error" class="search-error">
   <h2>오류 발생</h2>
-  <p>스크립트 혹은 데이터를 불러오지 못했습니다. 네트워크 연결 상태와 JavaScript 활성화 여부를 확인하십시오.</p>
+  <p>스크립트 혹은 데이터를 불러오지 못했습니다. 네트워크 연결 상태와 \
+JavaScript 활성화 여부를 확인하십시오.</p>
 </div>`);
 };
