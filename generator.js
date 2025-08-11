@@ -1,6 +1,9 @@
 import CanvasKitInit from './canvaskit.js';
 import { ImageBuilder } from './image.js';
 
+let fileURL = null;
+let imageURL = null;
+
 const defaultFontMap = new Map();
 const fontMap = new Map();
 const image = document.getElementById('preview');
@@ -124,7 +127,8 @@ for (const button of list.querySelectorAll('[data-dir=down]')) {
   button.disabled = false;
 }
 
-downloader.href = createScriptFile(output.value);
+fileURL = createScriptFile(output.value);
+downloader.href = fileURL;
 
 const [ CanvasKit ] = await ((load) => Promise.all([
   CanvasKitInit(),
@@ -172,18 +176,23 @@ form.onsubmit = (event) => {
     contentLeft,
     minContentTop,
   }, controls.message.value);
-  image.src = URL.createObjectURL(new Blob([buffer]));
+  if (imageURL !== null) URL.revokeObjectURL(imageURL);
+  imageURL = URL.createObjectURL(new Blob([buffer]));
+  image.src = imageURL;
   image.width = buffer.width;
   image.height = buffer.height;
+  const backgroundColorHex = hex(backgroundColor);
+  const frameColorHex = hex(frameColor);
+  const textColorHex = hex(textColor);
   const text = output.value = `\
-export const fonts = [${[...fontMap.keys()].map((name) => `
-  ${JSON.stringify(name)},`).join('')}
+export const fonts = [${[...fontMap.keys()].reduce((code, name) => code + `
+  ${JSON.stringify(name)},`, '')}
 ];
 
 export const style = {
-  backgroundColor: [${backgroundColor.map(toHexLiteral).join(', ')}],
-  frameColor: [${frameColor.map(toHexLiteral).join(', ')}],
-  textColor: [${textColor.map(toHexLiteral).join(', ')}],
+  backgroundColor: ${rgb(backgroundColorHex)}, // #${backgroundColorHex}
+  frameColor: ${rgb(frameColorHex)}, // #${frameColorHex}
+  textColor: ${rgb(textColorHex)}, // #${textColorHex}
   fontSize: ${fontSize},
   lineHeight: ${lineHeight},
   horizontalFrameThickness: ${horizontalFrameThickness},
@@ -194,7 +203,9 @@ export const style = {
   minContentTop: ${minContentTop},
 };
 `;
-  downloader.href = createScriptFile(text);
+  URL.revokeObjectURL(fileURL);
+  fileURL = createScriptFile(text);
+  downloader.href = fileURL;
   const y = form.getBoundingClientRect().y - 8;
   if (y < 0) window.scrollBy(0, y);
 };
@@ -213,6 +224,10 @@ function parseColor(color) {
   ];
 }
 
-function toHexLiteral(number) {
-  return `0x${number.toString(16).padStart(2, '0')}`;
+function hex(rgb) {
+  return (rgb[0] * 0x10000 + rgb[1] * 0x100 + rgb[2]).toString(16).padStart(6, '0');
+}
+
+function rgb(hex) {
+  return `[0x${hex.slice(0, 2)}, 0x${hex.slice(2, 4)}, 0x${hex.slice(4)}]`;
 }
