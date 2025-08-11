@@ -37,9 +37,11 @@ const details = {
  */
 export function renderEmail({ id, sent, message }) {
   return `\
+<div lang='ko'>
 <p style='white-space: pre-wrap;'>${h(message)}</p>
 <p>- <time datetime='${sent}'>${formatDateTime(sent)}</time> (${id})</p>
-<p><a href='${baseURL}/box/'>답글 쓰기</a></p>`;
+<p><a href='${baseURL}/box/'>답글 쓰기</a></p>
+</div>`;
 }
 
 /**
