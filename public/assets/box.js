@@ -6,9 +6,11 @@ let page = 1;
 let size = 1;
 let tab = '';
 
+const baseURL = new URL('/', location.href).href.slice(0, -1);
 const selectedIds = new Set();
 const removedIds = new Set();
 const pages = new Map();
+const urls = new Set();
 
 const {
   perPage,
@@ -126,35 +128,37 @@ function createPublishedCreator() {
   const messageText = template.querySelector('.message').lastChild;
   const repliedText = template.querySelector('.replied').lastChild;
   const replyText = template.querySelector('.reply').lastChild;
+  const postLink = template.querySelector('.link');
   const image = template.querySelector('.image');
-  const link = template.querySelector('.link');
 
   return async ({ id, reply, message, sent }, res) => {
     const loading = res.blob();
+    const postURL = pathById(id);
     sentText.data = sent;
     messageText.data = image.alt = message;
     repliedText.data = local(res.headers.get('last-modified'));
     replyText.data = reply;
-    link.href = pathById(id);
+    postLink.href = postURL;
 
-    const url = link.href;
     const tweetLine = tweetTemplate.cloneNode(true);
     const tweetLink = tweetLine.querySelector('.tweet');
-    tweetLink.search = new URLSearchParams({ text: `${reply} ${url}` });
-    image.src = URL.createObjectURL(await loading);
+    const imageURL = URL.createObjectURL(await loading);
+    image.src = imageURL;
+    tweetLink.search = new URLSearchParams({ text: `${reply} ${postURL}` });
+    urls.add(imageURL);
 
     const block = template.cloneNode(true);
     const loadingLine = block.querySelector('.loading');
 
     const enable = () => loadingLine.replaceWith(tweetLine);
-    untilPublished(url, 10, 10).then(enable).catch(() => {
+    untilPublished(postURL, 10, 10).then(enable).catch(() => {
       const retry = retryTemplate.cloneNode(true);
       const button = retry.querySelector('.retry');
       loadingLine.replaceWith(retry);
       button.onclick = async () => {
         retry.replaceWith(loadingLine);
         try {
-          await untilPublished(url, 0, 10);
+          await untilPublished(postURL, 0, 10);
         } catch (e) {
           return loadingLine.replaceWith(retry);
         }
@@ -246,8 +250,10 @@ function createRepliedCreator() {
       }).then(handleError);
       const repliedText = form.querySelector('.replied').lastChild;
       const replyText = form.querySelector('.reply').lastChild;
+      const tweetLink = form.querySelector('.tweet');
+      const reply = replyText.data = data.reply;
       repliedText.data = local(headers.get('last-modified'));
-      replyText.data = data.reply;
+      tweetLink.search = new URLSearchParams({ text: `${reply} ${pathById(data.id)}` });
       window.alert(repliedOK);
     } catch (error) {
       window.alert(error.message);
@@ -258,20 +264,23 @@ function createRepliedCreator() {
   }
 
   const template = document.getElementById('box-replied').content.firstElementChild;
-  const link = template.querySelector('.sent');
-  const sentText = link.lastChild;
+  const postLink = template.querySelector('.sent');
+  const sentText = postLink.lastChild;
   const messageText = template.querySelector('.message').lastChild;
   const repliedText = template.querySelector('.replied').lastChild;
   const replyText = template.querySelector('.reply').lastChild;
+  const tweetLink = template.querySelector('.tweet');
   const { id: idInput, reply: replyBox } = template.elements;
 
   return (post) => {
     const id = idInput.value = post.id;
-    link.href = pathById(id);
+    const reply = replyBox.value = replyText.data = post.reply;
+    const postURL = pathById(id);
+    postLink.href = postURL;
     sentText.data = post.sent;
     messageText.data = post.message;
     repliedText.data = post.replied;
-    replyBox.value = replyText.data = post.reply;
+    tweetLink.search = new URLSearchParams({ text: `${reply} ${postURL}` });
     const form = template.cloneNode(true);
     form.setAttribute('id', id);
     form.onsubmit = submit;
@@ -284,10 +293,10 @@ function createSelectedCreator() {
     const checkbox = event.currentTarget;
     if (checkbox.checked) return;
     posts.delete(checkbox.value);
-    if (posts.size === 0) {
-      restore();
-    } else {
+    if (posts.size > 0) {
       initializePage();
+    } else {
+      restore();
     }
   }
 
@@ -415,6 +424,10 @@ function cachePage() {
 function initializePage() {
   removedIds.clear();
   pages.clear();
+  if (urls.size > 0) {
+    for (const url of urls) URL.revokeObjectURL(url);
+    urls.clear();
+  }
   const total = posts.size;
   page = 1;
   size = (total > 1) ? Math.ceil(total / perPage) : 1;
@@ -462,7 +475,7 @@ function local(date) {
 }
 
 function pathById(id) {
-  return `/posts/${id}.html`;
+  return `${baseURL}/posts/${id}.html`;
 }
 
 function normalizeDateTime(datetime) {

@@ -83,6 +83,7 @@ export default (page, site) => {
     <pre class="message"> </pre>
     <p class="replied"> </p>
     <pre class="reply"> </pre>
+    <p class="box-submit"><a class="tweet" href="https://x.com/intent/post">트윗하기</a></p>
     <p><textarea name="reply"></textarea></p>
     <p class="box-submit"><button type="submit">수정</button></p>
   </form>
