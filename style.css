@@ -45,6 +45,9 @@ textarea {
   display: block;
   margin-block: 0 1.5em;
 }
+.small {
+  font-size: smaller;
+}
 @media (min-width: 640px) {
   p:first-child {
     margin-block-start: 0;
