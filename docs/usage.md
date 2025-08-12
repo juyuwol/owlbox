@@ -10,7 +10,7 @@
 
 이렇게 사이트를 갱신하는 **빌드의 횟수에는 제한이 존재합니다**. (다만 어지간해선 초과하기 어려운, 상당히 넉넉한 한도이므로 크게 걱정하실 필요는 없습니다.)
 
-호스팅사인 Vercel의 정책에 따라, 무료 계정은 **1시간 내 32회, 24시간 내 100회**까지의 배포(deployment: 빌드의 결과) 생성이 가능합니다. (2025년 7월 15일 기준) 최신의 정확한 정보는 [Vercel 공식 Limits 문서](https://vercel.com/docs/limits)에서 확인해 주세요.
+호스팅사인 Vercel의 정책에 따라, 무료 계정은 **1시간 내 32회, 24시간 내 100회**까지의 배포(deployment: 빌드의 결과) 생성이 가능합니다. (2025년 8월 12일 기준) 최신의 정확한 정보는 [Vercel 공식 Limits 문서](https://vercel.com/docs/limits)에서 확인해 주세요.
 
 ## IP 주소 확인 및 데이터 백업
 
@@ -95,9 +95,9 @@ export const fonts = [
 
 ``` javascript
 export const style = {
-  backgroundColor: [0xff, 0xff, 0xff],
-  frameColor: [0xbb, 0xbb, 0xbb],
-  textColor: [0x00, 0x00, 0x00],
+  backgroundColor: [0xff, 0xff, 0xff], // #ffffff
+  frameColor: [0xbb, 0xbb, 0xbb], // #bbbbbb
+  textColor: [0x00, 0x00, 0x00], // #000000
   fontSize: 28,
   lineHeight: 1.6,
   horizontalFrameThickness: 42,

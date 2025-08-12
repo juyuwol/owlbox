@@ -123,9 +123,7 @@ interface Site {
    */
   timeOffset: string;
 
-  /**
-   * `timeOffset` in milliseconds (same sign)
-   */
+  /** `timeOffset` in milliseconds (same sign) */
   timeOffsetMilliseconds: number;
 
   /**
@@ -141,7 +139,7 @@ interface Site {
 
     /**
      * From `version` field.
-     * Follows the Romantic Versioning format: PROJECT.MAJOR.MINOR
+     * Follows the Romantic Versioning (RomVer) format: PROJECT.MAJOR.MINOR
      * @example '1.0.0'
      */
     version: string;
