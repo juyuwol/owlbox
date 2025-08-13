@@ -17,6 +17,10 @@ const validate = {
     if ((typeof value === 'string') && EMAIL.test(value)) return value;
     throw new Error("'email' must be an email address if exists.");
   },
+  preferredSender: (value) => {
+    if ((value === 'google') || (value === 'resend')) return value;
+    throw new Error("'preferredSender' must be 'google' or 'resend'.");
+  },
   maxLength: (value) => {
     if ((value <= 1000) && (value >= 1) && Number.isInteger(value)) return value;
     throw new Error("'maxLength' must be an integer between 1 to 1000.");
