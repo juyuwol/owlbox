@@ -7,7 +7,7 @@ import { readFile, rm, writeFile } from 'node:fs/promises';
 const sep = (process.platform === 'win32') ? '\\' : '/';
 const unproxiedDir = 'data' + sep + 'unproxied';
 const files = readdirSync(unproxiedDir);
-if (files.length !== 0) {
+if (files.length > 0) {
   const posts = await Promise.all(files.map(async (name) => {
     const path = unproxiedDir + sep + name;
     const text = await readFile(path, 'utf-8');

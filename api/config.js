@@ -1,6 +1,6 @@
 import { respondError, updateJSON } from '../src/vercel.js';
 
-const EMAIL = /^.+@.+$/; // Loose check
+const EMAIL = /[^@]@[^@]/; // Loose check
 const NUMOFFSET = /^[+\-](?:[01]\d|2[0-3]):[0-5]\d$/;
 
 const validate = {
@@ -30,7 +30,7 @@ const validate = {
     throw new Error("'timeOffset' must be a RFC 3339 time-offset.");
   },
   title: (value) => {
-    if ((typeof value === 'string') && (value.trim().length > 0)) return value;
+    if ((typeof value === 'string') && (value.trim() !== '')) return value;
     throw new Error("'title' must include at least one non-whitespace character.");
   },
 };

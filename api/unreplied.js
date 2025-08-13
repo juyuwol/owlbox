@@ -1,7 +1,8 @@
 import { KV_KEY, kv, respondError } from '../src/vercel.js';
 
-const fromObject = (a, b) => `${a},"${b.id}",${JSON.stringify(JSON.stringify(b))}`;
-const fromJSON = (a, b) => `${a},"${JSON.parse(b).id}",${JSON.stringify(b)}`;
+// No need to escape id
+const fromObject = (a, b) => a + `,"${b.id}",${JSON.stringify(JSON.stringify(b))}`;
+const fromJSON = (a, b) => a + `,"${JSON.parse(b).id}",${JSON.stringify(b)}`;
 const reverse = (a, b) => ((a > b) ? -1 : 1);
 
 export async function DELETE(req) {
@@ -38,7 +39,7 @@ export async function GET(req) {
     return respondError(500, error.message);
   }
   if (req.url.endsWith('.json')) {
-    body = `[${ids.sort(reverse).reduce((a, b) => `${a},${map.get(b)}`, '').slice(1)}]\n`;
+    body = `[${ids.sort(reverse).reduce((a, b) => a + ',' + map.get(b), '').slice(1)}]\n`;
     type = 'application/json';
   } else { // JSON Lines format
     body = ids.sort().reduce((a, b) => a + map.get(b) + '\n', '');
@@ -55,7 +56,7 @@ export async function GET(req) {
 
 export async function PUT(req) {
   let pairs = '';
-  try { // No need to escape id
+  try {
     if (req.headers.get('content-type') === 'application/json') {
       const posts = await req.json();
       pairs = posts.reduce(fromObject, '');

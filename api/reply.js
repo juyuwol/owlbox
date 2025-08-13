@@ -4,8 +4,8 @@ import { fonts, style } from '../layouts/card.js';
 import { ImageBuilder } from '../src/image.js';
 import { KV_KEY, configGitHub, http, json, kv, local, respondError } from '../src/vercel.js';
 
-const initingCanvasKit = CanvasKitInit();
 const dir = process.cwd();
+const initingCanvasKit = CanvasKitInit();
 const fontFiles = await Promise.all(fonts.map(e => readFile(`${dir}/fonts/${e}`)));
 const CanvasKit = await initingCanvasKit;
 
@@ -45,7 +45,7 @@ async function reply(timestamp, { id, sent, message, reply }) {
     headers,
     body: JSON.stringify({
       base_tree: baseTree,
-      tree: [ // No need to escape id
+      tree: [
         { mode: '100644', type: 'blob', path: `data/unproxied/${id}.json`, content },
         { mode: '100644', type: 'blob', path: `public/images/${id}.png`, sha: blob },
       ],
@@ -56,20 +56,16 @@ async function reply(timestamp, { id, sent, message, reply }) {
   // https://docs.github.com/en/rest/git/commits?apiVersion=2022-11-28#create-a-commit
   const { sha } = await json(`${baseURL}/git/commits`, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({
-      message: `Publish ${id}`,
-      parents: [commit],
-      tree,
-    }),
+    headers, // No need to escape sha and id
+    body: `{"message":"Publish ${id}","parents":["${commit}"],"tree":"${tree}"}`,
   }, 'Failed to create a commit.');
 
   // Make the current branch point to the created commit
   // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
   await http(`${baseURL}/git/refs/heads/${branch}`, {
     method: 'PATCH',
-    headers,
-    body: `{"sha":"${sha}"}`, // No need to escape sha
+    headers, // No need to escape sha
+    body: `{"sha":"${sha}"}`,
   }, 'Failed to update the ref.');
 
   // Remove the message from the unreplied database

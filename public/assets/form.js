@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function warn(event) {
-    if (textbox.value.trim().length === 0) return;
+    if (textbox.value.trim() === '') return;
     event.preventDefault();
     event.returnValue = true;
   }

@@ -13,6 +13,12 @@ async function deletePosts(ids) {
     headers,
   }, 'Failed to get the last commit.');
 
+  const files = [];
+  for (const id of ids) files.push(
+    { mode: '100644', type: 'blob', sha: null, path: `data/unproxied/${id}.json` },
+    { mode: '100644', type: 'blob', sha: null, path: `public/images/${id}.png` },
+  );
+
   // Create a tree to edit the content of the repository
   // https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#create-a-tree
   const { sha: tree } = await json(`${baseURL}/git/trees`, {
@@ -20,7 +26,7 @@ async function deletePosts(ids) {
     headers,
     body: JSON.stringify({
       base_tree: baseTree,
-      tree: [...ids.values().map(toData), ...ids.values().map(toImage)],
+      tree: files,
     }),
   }, 'Failed to create a tree.');
 
@@ -28,29 +34,17 @@ async function deletePosts(ids) {
   // https://docs.github.com/en/rest/git/commits?apiVersion=2022-11-28#create-a-commit
   const { sha } = await json(`${baseURL}/git/commits`, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({
-      message: `Delete ${ids.join(', ')}`,
-      parents: [commit],
-      tree,
-    }),
+    headers, // No need to escape sha and id
+    body: `{"message":"Delete ${ids.join(', ')}","parents":["${commit}"],"tree":"${tree}"}`,
   }, 'Failed to create a commit.');
 
   // Make the current branch point to the created commit
   // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
   await http(`${baseURL}/git/refs/heads/${branch}`, {
     method: 'PATCH',
-    headers,
-    body: `{"sha":"${sha}"}`, // No need to escape sha
+    headers, // No need to escape sha
+    body: `{"sha":"${sha}"}`,
   }, 'Failed to update the ref.');
-}
-
-function toData(id) {
-  return { mode: '100644', type: 'blob', sha: null, path: `data/unproxied/${id}.json` };
-}
-
-function toImage(id) {
-  return { mode: '100644', type: 'blob', sha: null, path: `public/images/${id}.png` };
 }
 
 export async function DELETE(req) {

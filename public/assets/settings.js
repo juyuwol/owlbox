@@ -8,17 +8,16 @@ const button = document.getElementById('settings-submit');
 const schema = JSON.parse(form.dataset.schema);
 const initializers = {
   boolean: (value) => (value === 'on'),
-  number: (value) => (((value === null) || (value === '')) ? null : +value),
+  number: (value) => (value ? +value : null),
 };
 
-const { hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key) } = Object;
-const submit = form.onsubmit = async (event) => {
+form.onsubmit = async function submit(event) {
   event.preventDefault();
   form.onsubmit = (event) => event.preventDefault();
   button.disabled = true;
   const data = {};
   for (const [ key, curr ] of new FormData(form).entries()) {
-    if (!hasOwn(data, key)) {
+    if (!data.hasOwnProperty(key)) {
       data[key] = curr;
       continue;
     }
@@ -30,7 +29,7 @@ const submit = form.onsubmit = async (event) => {
     }
   }
   for (const key in schema) {
-    const hasProperty = hasOwn(data, key);
+    const hasProperty = data.hasOwnProperty(key);
     const value = hasProperty ? data[key] : null;
     const isArray = hasProperty && Array.isArray(value);
     const initialize = initializers[schema[key]];

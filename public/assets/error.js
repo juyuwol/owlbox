@@ -10,9 +10,9 @@ export async function handleError(res) {
     if (detail !== undefined) message += `: ${detail}`;
   } else {
     const { statusText } = res;
-    if (statusText !== '') message += ` ${statusText}`;
     const body = await res.text();
-    if (body.length !== 0) message += `: ${body}`;
+    if (statusText !== '') message += ` ${statusText}`;
+    if (body !== '') message += `: ${body}`;
   }
   throw new Error(message);
 }

@@ -56,11 +56,11 @@ const baseURL = site.baseURL ??= (e => (e !== undefined) ? `https://${e}` : ''
 )(process.env.VERCEL_PROJECT_PRODUCTION_URL);
 
 site.timeOffsetMilliseconds = offsetMilliseconds;
-site.generator = (({ displayName, version, repository }) => ({
-  name: displayName,
-  version,
-  repository,
-}))(packageJSON);
+site.generator = {
+  name: packageJSON.displayName,
+  version: packageJSON.version,
+  repository: packageJSON.repository,
+};
 
 if (production) {
   // Export the initialized configuration as an ECMAScript module
@@ -76,7 +76,7 @@ const [ proxiedPosts, unproxiedPosts ] = await (() => {
   }
 
   function normalizeDateTime(datetime) {
-    /// RFC 3339 full-date (YYYY-mm-dd) length: 10
+    // RFC 3339 full-date (YYYY-mm-dd) length: 10
     if ((datetime.length === 10) || datetime.endsWith(offset)) return datetime;
     const timestamp = Date.parse(datetime);
     return new Date(timestamp + offsetMilliseconds).toISOString().slice(0, -1) + offset;
