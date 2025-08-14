@@ -2,13 +2,14 @@ import { configGitHub, http, json, respondError } from '../src/vercel.js';
 
 async function deletePosts(ids) {
   const { baseURL, headers, branch } = configGitHub();
+  const ref = encodeURIComponent(branch);
 
   // Get the contents of the last commit
   // https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
   const {
     commit: { tree: { sha: baseTree } },
     sha: commit,
-  } = await json(`${baseURL}/commits/heads/${branch}`, {
+  } = await json(`${baseURL}/commits/heads/${ref}`, {
     method: 'GET',
     headers,
   }, 'Failed to get the last commit.');
@@ -40,7 +41,7 @@ async function deletePosts(ids) {
 
   // Make the current branch point to the created commit
   // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
-  await http(`${baseURL}/git/refs/heads/${branch}`, {
+  await http(`${baseURL}/git/refs/heads/${ref}`, {
     method: 'PATCH',
     headers, // No need to escape sha
     body: `{"sha":"${sha}"}`,
