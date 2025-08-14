@@ -1,10 +1,10 @@
 import { ipAddress, waitUntil } from '@vercel/functions';
 import { renderEmail, renderError } from '../layouts/submit.js';
-import { KV_KEY, http, kv, local } from '../src/vercel.js';
+import { KV_KEY, http, json, kv, local } from '../src/vercel.js';
 import site from '../config.js';
 
-const { maxLength } = site;
 const { env } = process;
+const { maxLength } = site;
 const deactivated = (site.activated !== true) || !('KV_REST_API_URL' in env);
 
 const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
@@ -23,8 +23,8 @@ const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
   const endpoint = useResend ? 'https://api.resend.com/emails' : APPS_SCRIPT_URL;
 
   const request = useResend ? http : async (url, init, message) => {
-    const { ok } = await http(url, init, message, true);
-    if (ok !== true) throw new Error(message);
+    const res = await json(url, init, message);
+    if (res?.ok !== true) throw new Error(message);
   };
 
   if (useResend) {
