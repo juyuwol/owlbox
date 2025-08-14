@@ -26,18 +26,19 @@ export async function DELETE(req) {
 export async function GET(req) {
   const map = new Map();
   const ids = [];
-  let body = '';
-  let type = '';
   try {
-    const result = await kv(`["HGETALL","${KV_KEY}"]`, 'Failed to get data.');
-    const iterator = result.values();
-    for (const id of iterator) {
-      map.set(id, iterator.next().value);
+    const res = await kv(`["HGETALL","${KV_KEY}"]`, 'Failed to get data.');
+    for (let i = res.length - 1; i > 0; --i) {
+      const value = res[i];
+      const id = res[--i];
+      map.set(id, value);
       ids.push(id);
     }
   } catch (error) {
     return respondError(500, error.message);
   }
+  let body = '';
+  let type = '';
   if (req.url.endsWith('.json')) {
     body = `[${ids.sort(reverse).reduce((a, b) => a + ',' + map.get(b), '').slice(1)}]\n`;
     type = 'application/json';
