@@ -37,11 +37,15 @@ const details = {
  */
 export function renderEmail({ id, sent, message }) {
   return `\
-<div lang='ko'>
+<!DOCTYPE html>
+<html lang='ko'>
+<head><title>익명 쪽지 도착</title></head>
+<body>
 <p style='white-space: pre-wrap;'>${h(message)}</p>
 <p>- <time datetime='${sent}'>${formatDateTime(sent)}</time> (${id})</p>
 <p><a href='${baseURL}/box/'>답글 쓰기</a></p>
-</div>`;
+</body>
+</html>`;
 }
 
 /**
