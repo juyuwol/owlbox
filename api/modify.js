@@ -11,16 +11,15 @@ function assign(data, updates) {
 
 export async function POST(req) {
   const timestamp = Date.now();
-  let post;
+  let id = '', reply = '';
   try {
-    post = await req.json();
+    ({ id, reply } = await req.json());
   } catch (error) {
     return respondError(400, error.message);
   }
+  const path = `data/unproxied/${id}.json`;
+  const replied = local(timestamp);
   try {
-    const { id, reply } = post;
-    const replied = local(timestamp);
-    const path = `data/unproxied/${id}.json`;
     await updateJSON(path, { replied, reply }, `Update ${id}`, assign);
   } catch (error) {
     return respondError(500, error.message);

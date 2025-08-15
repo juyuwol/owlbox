@@ -37,8 +37,7 @@ export async function GET(req) {
   } catch (error) {
     return respondError(500, error.message);
   }
-  let body = '';
-  let type = '';
+  let body = '', type = '';
   if (req.url.endsWith('.json')) {
     body = `[${ids.sort(reverse).reduce((a, b) => a + ',' + map.get(b), '').slice(1)}]\n`;
     type = 'application/json';

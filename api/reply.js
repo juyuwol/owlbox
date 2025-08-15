@@ -13,11 +13,7 @@ export async function POST(req) {
   const timestamp = Date.now();
   let id = '', sent = '', message = '', reply = '';
   try {
-    const res = await req.json();
-    id = res.id;
-    sent = res.sent;
-    message = res.message;
-    reply = res.reply;
+    ({ id, sent, message, reply } = await req.json());
   } catch (error) {
     return respondError(400, error.message);
   }
