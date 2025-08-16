@@ -1,18 +1,16 @@
 import { configGitHub, http, json, respondError } from '../src/vercel.js';
 
 export async function DELETE(req) {
-  const files = [];
-  let ids = '';
-  try {
-    const res = await req.json();
-    ids = res.join(', ');
-    for (const id of res) files.push(
-      { mode: '100644', type: 'blob', sha: null, path: `data/unproxied/${id}.json` },
-      { mode: '100644', type: 'blob', sha: null, path: `public/images/${id}.png` },
-    );
-  } catch (error) {
-    return respondError(400, error.message);
+  const ids = new URL(req.url).searchParams.getAll('id');
+  if (ids.length === 0) {
+    return respondError(400, "At least one 'id' parameter is required.");
   }
+
+  const files = [];
+  for (const id of res) files.push(
+    { mode: '100644', type: 'blob', sha: null, path: `data/unproxied/${id}.json` },
+    { mode: '100644', type: 'blob', sha: null, path: `public/images/${id}.png` },
+  );
 
   const { baseURL, headers, branch } = configGitHub();
   const ref = encodeURIComponent(branch);
@@ -43,7 +41,7 @@ export async function DELETE(req) {
     const { sha } = await json(`${baseURL}/git/commits`, {
       method: 'POST',
       headers, // No need to escape sha and id
-      body: `{"message":"Delete ${ids}","parents":["${commit}"],"tree":"${tree}"}`,
+      body: `{"message":"Delete ${ids.join(', ')}","parents":["${commit}"],"tree":"${tree}"}`,
     }, 'Failed to create a commit.');
 
     // Make the current branch point to the created commit

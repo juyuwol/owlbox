@@ -400,10 +400,8 @@ async function deleteItems() {
   deleteButton.disabled = true;
   const ids = [...posts.keys()];
   try {
-    await fetch(temp.tab, {
+    await fetch(`${temp.tab}?id=${ids.join('&id=')}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ids),
       credentials: 'include',
     }).then(handleError);
   } catch (error) {

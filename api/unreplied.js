@@ -6,14 +6,12 @@ const fromJSON = (a, b) => a + `,"${JSON.parse(b).id}",${JSON.stringify(b)}`;
 const reverse = (a, b) => ((a > b) ? -1 : 1);
 
 export async function DELETE(req) {
-  let ids = '';
-  try {
-    ids = (await req.json()).join('","');
-  } catch (error) {
-    return respondError(400, error.message);
+  const ids = new URL(req.url).searchParams.getAll('id');
+  if (ids.length === 0) {
+    return respondError(400, "At least one 'id' parameter is required.");
   }
   try { // No need to escape id
-    await kv(`["HDEL","${KV_KEY}","${ids}"]`, 'Failed to delete data.');
+    await kv(`["HDEL","${KV_KEY}","${ids.join('","')}"]`, 'Failed to delete data.');
   } catch (error) {
     return respondError(500, error.message);
   }
