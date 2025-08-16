@@ -76,7 +76,7 @@ export default (page, site) => {
   </form>
 </template>
 <template id="box-replied">
-  <form class="post-item" action="/box/modify" method="post">
+  <form class="post-item" action="/box/replied" method="post">
     <input name="id" type="hidden">
     <box-checkbox></box-checkbox>
     <h2 class="box-post-heading"><a class="sent"> </a></h2>
