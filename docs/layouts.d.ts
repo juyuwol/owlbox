@@ -134,8 +134,11 @@ interface Site {
 
   /** Generator metadata from package.json */
   generator: {
-    /** From `displayName` field */
+    /** From `name` field */
     name: string;
+
+    /** From `displayName` field */
+    displayName: string;
 
     /**
      * From `version` field.
