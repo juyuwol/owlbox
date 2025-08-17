@@ -29,7 +29,7 @@ const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
 
   if (useResend) {
     headers.Authorization = `Bearer ${RESEND_API_KEY}`;
-    base.from = `${site.title} <owlbox@${RESEND_DOMAIN}>`;
+    base.from = `${site.title} <${site.generator.name}@${RESEND_DOMAIN}>`;
   } else {
     base.name = site.title;
   }

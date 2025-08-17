@@ -5,7 +5,7 @@ const STATUS_CODES = {
   500: 'Internal Server Error',
 };
 
-const generator = site.generator.name;
+const generator = site.generator.displayName;
 const offset = site.timeOffset;
 const offsetMilliseconds = site.timeOffsetMilliseconds;
 

@@ -57,7 +57,8 @@ const baseURL = site.baseURL ??= (e => (e !== undefined) ? `https://${e}` : ''
 
 site.timeOffsetMilliseconds = offsetMilliseconds;
 site.generator = {
-  name: packageJSON.displayName,
+  name: packageJSON.name,
+  displayName: packageJSON.displayName,
   version: packageJSON.version,
   repository: packageJSON.repository,
 };

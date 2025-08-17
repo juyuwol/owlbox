@@ -11,8 +11,8 @@ let hideLogin = true;
 
 export default (page, site, content) => {
   if (uninitialized) {
-    const { generator: { name, version }, title } = site;
-    generator = `${e(name)} ${version}`;
+    const { generator: { displayName, version }, title } = site;
+    generator = `${e(displayName)} ${version}`;
     siteNode = h(title);
     siteAttr = e(title);
     description = e(site.description);
