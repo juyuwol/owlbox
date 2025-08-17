@@ -28,16 +28,17 @@ const details = {
 
 /**
  * @param {{ id: string, sent: string, message: string }} post
+ * @param {string} subject
  * @returns {string}
  */
-export function renderEmail({ id, sent, message }) {
+export function renderEmail({ id, sent, message }, subject) {
   return `\
 <!DOCTYPE html>
 <html lang='ko'>
-<head><title>익명 쪽지 도착</title></head>
+<head><title>${h(subject)}</title></head>
 <body>
 <p style='white-space: pre-wrap;'>${h(message)}</p>
-<p>- <time datetime='${sent}'>${formatDateTime(sent)}</time> (${id})</p>
+<p>- <time datetime='${sent}'>${h(formatDateTime(sent))}</time> (${id})</p>
 <p><a href='${baseURL}/box/'>답글 쓰기</a></p>
 </body>
 </html>`;

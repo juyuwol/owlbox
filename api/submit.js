@@ -3,6 +3,8 @@ import { renderEmail, renderError } from '../layouts/submit.js';
 import { KV_KEY, http, json, kv, local } from '../src/vercel.js';
 import site from '../config.js';
 
+const SUBJECT = '익명 쪽지 도착';
+
 const { env } = process;
 const { maxLength } = site;
 const deactivated = (site.activated !== true) || !('KV_REST_API_URL' in env);
@@ -18,7 +20,7 @@ const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
 
   const useResend = unavailableGoogle || (site.preferredSender === 'resend');
   const headers = { 'Content-Type': 'application/json' };
-  const base = { subject: '익명 쪽지 도착', to: email };
+  const base = { subject: SUBJECT, to: email };
   const body = useResend ? 'html': 'htmlBody';
   const endpoint = useResend ? 'https://api.resend.com/emails' : APPS_SCRIPT_URL;
 
@@ -37,7 +39,7 @@ const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
   return (post) => request(endpoint, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ [body]: renderEmail(post), ...base }),
+    body: JSON.stringify({ [body]: renderEmail(post, SUBJECT), ...base }),
   }, 'Failed to send the email.');
 })();
 
