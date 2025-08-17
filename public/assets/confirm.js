@@ -2,20 +2,16 @@
 // SPDX-License-Identifier: 0BSD
 
 'use strict';
-
 (() => {
 
-const message = window.sessionStorage.getItem('message');
+const message = sessionStorage.getItem('message');
 if (message === null) return;
-
-const { classList } = document.documentElement;
-classList.add('confirm-busy');
-
-document.addEventListener('DOMContentLoaded', () => {
-  const { content } = document.getElementById('confirm');
-  content.getElementById('confirm-message').append(message);
-  document.getElementById('main-content').append(content);
-  classList.remove('confirm-busy');
+customElements.define('confirm-section', class extends HTMLElement {
+  connectedCallback() {
+    const { content } = document.getElementById('confirm-section');
+    content.getElementById('confirm-message').append(message);
+    this.append(content);
+  }
 });
 
 })();

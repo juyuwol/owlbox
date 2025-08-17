@@ -1,4 +1,3 @@
-import confirm from './parts/confirm.js';
 import adminArchive from './admin-archive.js';
 import adminBox from './admin-box.js';
 import adminSettings from './admin-settings.js';
@@ -40,8 +39,7 @@ export const pages = {
     layout: status,
     title: '전송 완료',
     detail: '쪽지를 보냈습니다.',
-    scripts: ['/assets/confirm.js'],
-    beforeBodyEnd: confirm('보낸 쪽지'),
+    confirm: '보낸 쪽지',
   },
   '/404.html': {
     layout: status,

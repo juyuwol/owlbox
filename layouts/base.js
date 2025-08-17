@@ -21,7 +21,7 @@ export default (page, site, content) => {
     hideLogin = (site.showLogin !== true);
     uninitialized = false;
   }
-  const { path, title, beforeBodyEnd } = page;
+  const { path, title, beforeHeadEnd, beforeBodyEnd } = page;
   const isHome = (path === '/');
   const titleTag = (page.notitle === true) ? 'h1' : 'p';
   return `\
@@ -54,7 +54,9 @@ export default (page, site, content) => {
   <meta property="og:description" content="${isHome ? description : siteAttr}">
   <meta property="og:image" content="${site.baseURL}/icon.png">
   <meta name="twitter:card" content="summary">`}
-  <meta name="generator" content="${generator}">
+  <meta name="generator" content="${generator}">${
+  (beforeHeadEnd === undefined) ? '' : `
+  ${beforeHeadEnd.render(2)}`}
 </head>
 <body>
   <header class="header">
@@ -73,9 +75,8 @@ export default (page, site, content) => {
     <address class="content footer-content nav">
       <a href="${footerURL}">${footerLabel}</a>
     </address>
-  </footer>${
-  (beforeBodyEnd === undefined) ? '' :
-  (beforeBodyEnd.unshift(''), beforeBodyEnd.render(2))}
+  </footer>${(beforeBodyEnd === undefined) ? '' : `
+  ${beforeBodyEnd.render(2)}`}
 </body>
 </html>
 `;
