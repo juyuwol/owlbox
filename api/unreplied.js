@@ -1,9 +1,7 @@
 import { KV_KEY, kv, respondError } from '../src/vercel.js';
 
-// No need to escape id
 const fromObject = (a, b) => a + `,"${b.id}",${JSON.stringify(JSON.stringify(b))}`;
 const fromJSON = (a, b) => a + `,"${JSON.parse(b).id}",${JSON.stringify(b)}`;
-const reverse = (a, b) => ((a > b) ? -1 : 1);
 
 export async function DELETE(req) {
   const ids = new URL(req.url).searchParams.getAll('id');
@@ -25,22 +23,23 @@ export async function GET(req) {
   const map = new Map();
   const ids = [];
   try {
-    const res = await kv(`["HGETALL","${KV_KEY}"]`, 'Failed to get data.');
-    for (let i = res.length - 1; i > 0; --i) {
-      const value = res[i];
-      const id = res[--i];
+    const result = await kv(`["HGETALL","${KV_KEY}"]`, 'Failed to get data.');
+    for (let i = result.length - 1; i > 0; --i) {
+      const value = result[i];
+      const id = result[--i];
       map.set(id, value);
       ids.push(id);
     }
   } catch (error) {
     return respondError(500, error.message);
   }
+  ids.sort();
   let body = '', type = '';
   if (req.url.endsWith('.json')) {
-    body = `[${ids.sort(reverse).reduce((a, b) => a + ',' + map.get(b), '').slice(1)}]\n`;
+    body = `[${ids.reduceRight((a, b) => a + ',' + map.get(b), '').slice(1)}]\n`;
     type = 'application/json';
   } else { // JSON Lines format
-    body = ids.sort().reduce((a, b) => a + map.get(b) + '\n', '');
+    body = ids.reduce((a, b) => a + map.get(b) + '\n', '');
     type = 'text/plain; charset=utf-8';
   }
   return new Response(body, {
@@ -54,7 +53,7 @@ export async function GET(req) {
 
 export async function PUT(req) {
   let pairs = '';
-  try {
+  try { // No need to escape id
     if (req.headers.get('content-type') === 'application/json') {
       const posts = await req.json();
       pairs = posts.reduce(fromObject, '');
