@@ -1,77 +1,28 @@
 'use strict';
+((replaceChildren) => {
 
-((state = {}) => {
-
-const { classList } = document.documentElement;
 const { origin, pathname } = location;
-const params = new URLSearchParams(location.search);
-const query = normalizeQuery(params);
-const keys = parseKeys(query);
-const hasKeys = (keys !== null);
-const loading = fetch('/search/index.json').then((res) => {
+const pages = new Map();
+let query = normalizeQuery(new URLSearchParams(location.search));
+let total = 0, perPage = 1, lastPage = 1;
+let matched = null, keys = null;
+let postDir = '';
+
+let previousElementSibling = null;
+const { classList } = document.documentElement;
+const hasQuery = (query !== '');
+const loading = fetch('index.json').then((res) => {
   if (!res.ok) throw new Error();
   return res.json();
 });
 
 classList.add('search-enabled');
-if (hasKeys) classList.add('search-busy');
+if (hasQuery) classList.add('search-loading', 'search-searching');
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const form = document.getElementById('search');
-  const button = form.querySelector('[type=submit]');
-  if (hasKeys) {
-    form.elements.q.value = query;
-    button.disabled = true;
-    classList.add('search-busy2');
-    classList.remove('search-busy');
-  }
-
-  try {
-    const data = await loading;
-    const { content } = document.getElementById('search-result');
-    const totalText = content.getElementById('search-total').lastChild;
-    const list = content.getElementById('search-list');
-    const result = content.firstElementChild;
-    const perPage = +result.dataset.perPage;
-    const createItem = createItemCreator();
-
-    document.addEventListener('search-render', (event) => {
-      const { matched, page, pages } = event.detail;
-      const total = matched.length;
-      const cache = pages.get(page);
-      if (cache !== undefined) {
-        list.replaceChildren(...cache);
-      } else {
-        const index = (page - 1) * perPage;
-        const items = matched.slice(index, index + perPage).map(createItem);
-        pages.set(page, items);
-        list.replaceChildren(...items);
-      }
-      totalText.data = `${total}`;
-      list.hidden = (total === 0);
-      result.hidden = false;
-    });
-
-    document.addEventListener('search-search', (event) => {
-      const { params, query = normalizeQuery(params) } = event.detail;
-      if (query === state.query) {
-        state.page = parsePage(params, state.size);
-      } else {
-        const keys = parseKeys(query);
-        if (keys === null) return void (result.hidden = true);
-        const matched = data.filter(search(keys));
-        const total = matched.length;
-        const size = (total > 1) ? Math.ceil(total / perPage) : 1;
-        const page = parsePage(params, size);
-        state = { query, size, matched, page, pages: new Map() };
-      }
-      emit('search-render', state);
-    });
-
-    window.onpopstate = () => {
-      if (location.pathname !== pathname) return;
-      emit('search-search', { params: new URLSearchParams(location.search) });
-    };
+customElements.define('search-content', class extends HTMLElement {
+  connectedCallback() {
+    const form = document.getElementById('search');
+    const box = form.elements.q;
 
     form.onsubmit = (event) => {
       const form = event.currentTarget;
@@ -79,44 +30,111 @@ document.addEventListener('DOMContentLoaded', async () => {
       const action = new URL(form.action);
       if ((action.origin !== origin) || (action.pathname !== pathname)) return;
       event.preventDefault();
+      box.value = box.value.trim();
       const params = new URLSearchParams(new FormData(form));
       action.search = params;
       history.pushState(null, '', action);
       emit('search-search', { params });
     };
 
-    definePager(result);
-    document.getElementById('search-error').replaceWith(result);
+    window.onpopstate = () => {
+      if (location.pathname !== pathname) return;
+      const params = new URLSearchParams(location.search);
+      const query = box.value = normalizeQuery(params);
+      emit('search-search', { params, query });
+    };
 
-    if (!hasKeys) return;
-    button.disabled = false;
-    emit('search-search', { params, query });
-    classList.remove('search-busy2');
-  } catch (e) {
-    classList.remove('search-enabled', 'search-busy', 'search-busy2');
+    ({ dataset: { perPage, postDir }, previousElementSibling } = this);
+    perPage = +perPage;
+    this.remove();
+
+    if (!hasQuery) return;
+    box.value = query;
+    classList.remove('search-loading');
   }
 });
+
+document.addEventListener('DOMContentLoaded', () => loading.then((data) => {
+  for (const post of data) {
+    post.m = post.message.toLowerCase();
+    post.r = post.reply.toLowerCase();
+  }
+
+  const { content } = document.getElementById('search-result');
+  const totalText = content.getElementById('search-total').lastChild;
+  const list = content.getElementById('search-list');
+  const result = content.firstElementChild;
+  const createItem = createItemCreator();
+
+  document.addEventListener('search-render', (event) => {
+    const { init, currPage } = event.detail;
+    let items = pages.get(currPage);
+    if (items === undefined) {
+      const index = (currPage - 1) * perPage;
+      items = matched.slice(index, index + perPage).map(createItem(keys));
+      pages.set(currPage, items);
+    }
+    replaceChildren(list, items);
+    if (init) return;
+    totalText.data = `${total}`;
+    list.hidden = (total === 0);
+    result.hidden = false;
+  });
+
+  document.addEventListener('search-search', (event) => {
+    const { params, query: q = normalizeQuery(params) } = event.detail;
+    const init = (keys !== null) && (q === query);
+    if (!init) {
+      pages.clear();
+      query = q;
+      keys = parseKeys(q);
+      if (keys === null) return void (result.hidden = true);
+      matched = data.filter(({ m, r }) => keys.every(e => m.includes(e) || r.includes(e)));
+      total = matched.length;
+      lastPage = (total > perPage) ? Math.ceil(total / perPage) : 1;
+    }
+    const page = parsePage(params, lastPage);
+    emit('search-render', {
+      init,
+      baseURL: `?${new URLSearchParams({ q })}&p=`,
+      prevPage: Math.max(page - 1, 1),
+      currPage: page,
+      nextPage: Math.min(page + 1, lastPage),
+    });
+  });
+
+  definePager(result);
+  previousElementSibling.after(result);
+
+  if (!hasQuery) return;
+  emit('search-search', { params: new URLSearchParams(location.search) });
+  classList.remove('search-searching');
+}).catch(() => {
+  classList.remove('search-enabled', 'search-loading', 'search-searching');
+}));
 
 function createItemCreator() {
   const template = document.getElementById('search-item').content.firstElementChild;
   const link = template.querySelector('.post-link');
   const titleText = template.querySelector('.post-title').lastChild;
-  const messageText = template.querySelector('.post-message').lastChild;
+  const senderText = template.querySelector('.post-label').lastChild;
   const sentTime = template.querySelector('.post-sent');
   const sentText = sentTime.lastChild;
-  const replyTime = template.querySelector('.post-reply');
-  const replyText = replyTime.lastChild;
-  const repliedText = template.querySelector('.post-replied').lastChild;
-  return ({ id, message, sent, reply, replied }) => {
-    link.href = `/posts/${id}.html`;
-    titleText.data = formatTitle(sent);
-    messageText.data = message;
-    sentText.data = formatDatetime(sent);
-    replyText.data = reply;
+  const repliedTime = template.querySelector('.post-replied');
+  const repliedText = repliedTime.lastChild;
+  return (keys) => (post) => {
+    const { sent, replied, color = '익명의' } = post;
+    const sender = senderText.data = `${color} 쪽지`;
+    const text = sentText.data = formatDatetime(sent);
     repliedText.data = formatDatetime(replied);
+    titleText.data = formatTitle(sent, text, sender);
+    link.setAttribute('href', `/${postDir}/${post.id}.html`);
     sentTime.setAttribute('datetime', sent);
-    replyTime.setAttribute('datetime', replied);
-    return template.cloneNode(true);
+    repliedTime.setAttribute('datetime', replied);
+    const item = template.cloneNode(true);
+    highlight(keys, item.querySelector('.post-message'), post.message, post.m);
+    highlight(keys, item.querySelector('.post-reply'), post.reply, post.r);
+    return item;
   };
 }
 
@@ -126,14 +144,7 @@ function definePager(result) {
     if ((link.origin !== origin) || (link.pathname !== pathname)) return;
     event.preventDefault();
     history.pushState(null, '', link.href);
-    const params = new URLSearchParams(link.search);
-    const query = normalizeQuery(params);
-    if (query === state.query) {
-      state.page = parsePage(params, state.size);
-      emit('search-render', state);
-    } else {
-      emit('search-search', { params, query });
-    }
+    emit('search-search', { params: new URLSearchParams(link.search) });
     result.setAttribute('tabindex', '-1');
     result.focus({ preventScroll: true });
     result.blur();
@@ -142,30 +153,35 @@ function definePager(result) {
     if (y < 0) window.scrollBy(0, y);
   }
 
-  const template = document.getElementById('search-pager').content.firstElementChild;
+  const pager = document.getElementById('search-pager').content.firstElementChild;
   customElements.define('search-pager', class extends HTMLElement {
     constructor() {
       super();
-      this.append(template.cloneNode(true));
+      this.append(pager.cloneNode(true));
 
-      const first = this.querySelector('.pager-first > a');
-      const prev = this.querySelector('.pager-prev > a');
-      const next = this.querySelector('.pager-next > a');
-      const last = this.querySelector('.pager-last > a');
-      const curr = this.querySelector('.pager-curr').lastChild;
-      last.onclick = next.onclick = prev.onclick = first.onclick = intercept;
+      const firstLink = this.querySelector('.pager-first > a');
+      const firstItem = firstLink.parentNode;
+      const prevLink = this.querySelector('.pager-prev > a');
+      const prevItem = prevLink.parentNode;
+      const nextLink = this.querySelector('.pager-next > a');
+      const nextItem = nextLink.parentNode;
+      const lastLink = this.querySelector('.pager-last > a');
+      const lastItem = lastLink.parentNode;
+      const currText = this.querySelector('.pager-curr').lastChild;
+
+      lastLink.onclick = nextLink.onclick = prevLink.onclick = firstLink.onclick = intercept;
 
       document.addEventListener('search-render', (event) => {
-        const { query, size, matched, page } = event.detail;
-        const path = `?${new URLSearchParams({ q: query })}&p=`;
-        this.hidden = (matched.length === 0);
-        prev.parentNode.hidden = first.parentNode.hidden = (page === 1);
-        last.parentNode.hidden = next.parentNode.hidden = (page === size);
-        curr.data = `${page}`;
-        first.href = path + '1';
-        prev.href = path + Math.max(page - 1, 1);
-        next.href = path + Math.min(page + 1, size);
-        last.href = path + size;
+        if (this.hidden = (total === 0)) return;
+        const { init, baseURL, prevPage, currPage, nextPage } = event.detail;
+        prevItem.hidden = firstItem.hidden = (currPage === 1);
+        lastItem.hidden = nextItem.hidden = (currPage === lastPage);
+        currText.data = `${currPage}`;
+        prevLink.setAttribute('href', baseURL + prevPage);
+        nextLink.setAttribute('href', baseURL + nextPage);
+        if (init) return;
+        firstLink.setAttribute('href', baseURL + '1');
+        lastLink.setAttribute('href', baseURL + lastPage);
       });
     }
   });
@@ -175,46 +191,6 @@ function emit(type, detail) {
   document.dispatchEvent(new CustomEvent(type, { detail }));
 }
 
-function normalizeQuery(params) {
-  const query = params.get('q');
-  return (query === null) ? '' : query.trim();
-}
-
-function parseKeys(query) {
-  if (query === '') return null;
-  const keys = new Set();
-  const end = query.length;
-  for (let i = 0, k = 0, p = 0; p < end; p = k + 1) {
-    i = query.indexOf('"', p);
-    const unfound = (i === -1) || ((k = query.indexOf('"', i + 1)) === -1);
-    if (unfound || (p < i)) {
-      for (const e of query.slice(p, unfound ? end : i).trim().split(' ')) {
-        if (e === '') continue;
-        keys.add(e.toLowerCase());
-      }
-      if (unfound) break;
-    }
-    if (++i < k) keys.add(query.slice(i, k).toLowerCase());
-  }
-  return (keys.size === 0) ? null : [...keys];
-}
-
-function parsePage(params, size) {
-  const query = params.get('p');
-  if ((query === null) || (query === '')) return 1;
-  const number = +query;
-  if (!Number.isFinite(number) || (number <= 1)) return 1;
-  return Math.min(Math.trunc(number), size);
-}
-
-function search(keys) {
-  return ({ message, reply }) => {
-    message = message.toLowerCase();
-    reply = reply.toLowerCase();
-    return keys.every(e => (message.includes(e) || reply.includes(e)));
-  };
-}
-
 function formatDatetime(datetime) {
   const month = +datetime.slice(5, 7);
   const day = +datetime.slice(8, 10);
@@ -222,18 +198,79 @@ function formatDatetime(datetime) {
   return (datetime.length > 10) ? `${date} ${datetime.slice(11, 19)}` : date;
 }
 
-function formatTitle(datetime) {
-  const month = +datetime.slice(5, 7);
-  const day = +datetime.slice(8, 10);
-  let title = `${datetime.slice(0, 4)}년 ${month}월 ${day}일`;
-  if (datetime.length > 10) {
-    const hours = +datetime.slice(11, 13);
-    const hours12 = hours % 12;
-    const minutes = +datetime.slice(14, 16);
-    const suffix = (hours < 12) ? '전' : '후';
-    title += ` 오${suffix} ${(hours12 === 0) ? '12' : hours12}시 ${minutes}분`;
-  }
-  return `${title}의 쪽지`;
+function formatTitle(datetime, text, sender) {
+  return `${(datetime.length > 10) ? text.slice(0, -3) : text} ${sender}`;
 }
 
-})();
+function highlight(keys, parent, str, strLowered) {
+  const indexes = new Map();
+  const end = str.length;
+  keys = new Set(keys);
+  for (let i = 0, k = 0, n = -1; i < end; n = -1) {
+    for (const key of keys) {
+      const cache = indexes.get(key);
+      const index = (cache >= i) ? cache : strLowered.indexOf(key, i);
+      if (index === -1) {
+        keys.delete(key);
+        continue;
+      } else if ((n === -1) || (n > index)) {
+        n = index;
+        k = key.length;
+      }
+      indexes.set(key, index);
+    }
+    if (n === -1) {
+      if (i < end) parent.append(str.slice(i));
+      break;
+    }
+    if (i < n) parent.append(str.slice(i, n));
+    const mark = document.createElement('mark');
+    mark.append(str.slice(n, i = n + k));
+    parent.append(mark);
+  }
+}
+
+function normalizeQuery(params) {
+  const query = params.get('q');
+  return (query === null) ? '' : query.trim();
+}
+
+function compare(a, b) {
+  const diff = b.length - a.length;
+  return (diff !== 0) ? diff : (a < b) ? -1 : 1;
+}
+
+function parseKeys(query) {
+  if (query === '') return null;
+  const keys = new Set();
+  const end = query.length;
+  for (let i = 0, k = 0, n = 0; i < end; i = n + 1) {
+    k = query.indexOf('"', i);
+    const unfound = (k === -1) || ((n = query.indexOf('"', k + 1)) === -1);
+    if (unfound || (i < k)) {
+      for (const e of query.slice(i, unfound ? end : k).trim().split(' ')) {
+        if (e === '') continue;
+        keys.add(e.toLowerCase());
+      }
+      if (unfound) break;
+    }
+    if (++k < n) keys.add(query.slice(k, n).toLowerCase());
+  }
+  return (keys.size > 0) ? [...keys].sort(compare) : null;
+}
+
+function parsePage(params, size) {
+  const query = params.get('p');
+  if (!query) return 1;
+  const number = +query;
+  if (!Number.isFinite(number) || (number <= 1)) return 1;
+  return Math.min(Math.trunc(number), size);
+}
+
+})(('replaceChildren' in document) ?
+  (parent, children) => parent.replaceChildren(...children) :
+  (parent, children) => {
+    while (parent.hasChildNodes()) parent.removeChild(parent.lastChild);
+    parent.append(...children);
+  }
+);

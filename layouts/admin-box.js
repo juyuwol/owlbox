@@ -1,4 +1,5 @@
 import render from './admin.js';
+import { colors } from './card.js';
 import { prettify } from './util.js';
 
 export default (page, site) => {
@@ -7,17 +8,20 @@ export default (page, site) => {
   const storable = ('KV_REST_API_URL' in process.env);
   page.scriptsModule = ['/assets/error.js', '/assets/box.js'];
   page.beforeBodyEnd = prettify(`\
-<script id="box-config" type="application/json">${JSON.stringify({
-  perPage: site.perPage,
-  offset: site.timeOffset,
-  offsetMilliseconds: site.timeOffsetMilliseconds,
-  unrepliedConfirm: '작성합니까?',
-  unrepliedOK: '작성되었습니다.',
-  repliedConfirm: '수정합니까?',
-  repliedOK: '수정되었습니다.',
-  deleteConfirm: '삭제합니까?',
-  deleteOK: '삭제되었습니다.',
-})}</script>
+<script id="box-config" type="application/json">
+  ${JSON.stringify({
+    offset: site.timeOffset,
+    offsetMilliseconds: site.timeOffsetMilliseconds,
+    perPage: site.perPage,
+    postDir: `posts${site.suffix}`,
+    unrepliedConfirm: '작성합니까?',
+    unrepliedOK: '작성되었습니다.',
+    repliedConfirm: '수정합니까?',
+    repliedOK: '수정되었습니다.',
+    deleteConfirm: '삭제합니까?',
+    deleteOK: '삭제되었습니다.',
+  })}
+</script>
 <template id="box-pager">
   <nav class="box-pager">
     <button class="box-pager-first" type="button">맨앞</button>
@@ -68,7 +72,13 @@ export default (page, site) => {
     <input name="id" type="hidden">
     <input name="sent" type="hidden">
     <box-checkbox></box-checkbox>
-    <p class="sent"> </p>
+    <h2 class="box-post-heading">
+      <time class="sent"> </time>
+      <select name="color">
+        <option></option>${Object.keys(colors).reduce((code, name) => code + `
+        <option>${name}</option>`, '')}
+      </select>
+    </h2>
     <p class="box-message"><textarea name="message"></textarea></p>
     <p class="box-count"><span class="count"> </span> / 1000</p>
     <p><textarea name="reply"></textarea></p>
@@ -79,7 +89,10 @@ export default (page, site) => {
   <form class="post-item" action="/box/replied" method="post">
     <input name="id" type="hidden">
     <box-checkbox></box-checkbox>
-    <h2 class="box-post-heading"><a class="sent"> </a></h2>
+    <h2 class="box-post-heading">
+      <a class="sent"> </a>
+      <span class="color"> </span>
+    </h2>
     <pre class="message"> </pre>
     <p class="replied"> </p>
     <pre class="reply"> </pre>

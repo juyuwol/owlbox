@@ -35,7 +35,8 @@ export default (page, site, content) => {
   page.styles?.reduce((code, path) => code + `
   <link rel="stylesheet" href="${path}">`, '') ?? ''}${
   page.scriptsModule?.reduce((code, path) => code + `
-  <script src="${path}" type="module"></script>`, '') ?? ''}${
+  <script src="${path}" type="module"></script>`, '') ?? ''}${hideLogin ? `
+  <script src="/assets/theme.js"></script>` : ''}${
   page.scripts?.reduce((code, path) => code + `
   <script src="${path}"></script>`, '') ?? ''}
   <link rel="icon" href="/favicon.ico">${
@@ -54,21 +55,24 @@ export default (page, site, content) => {
   <meta property="og:description" content="${isHome ? description : siteAttr}">
   <meta property="og:image" content="${site.baseURL}/icon.png">
   <meta name="twitter:card" content="summary">`}
-  <meta name="generator" content="${generator}">${
-  (beforeHeadEnd === undefined) ? '' : `
-  ${beforeHeadEnd.render(2)}`}
+  <meta name="generator" content="${generator}">
+  <template id="theme-panel">
+    <label class="label-checkbox"><input id="theme-toggle" type="checkbox"> </label>
+  </template>${(beforeHeadEnd === undefined) ? '' : `
+  ${beforeHeadEnd.toString(2)}`}
 </head>
 <body>
   <header class="header">
     <div class="content header-content nav">
-      <${titleTag} class="site-title"><a href="/">${siteNode}</a></${titleTag}>${
-      (hideLogin || (path?.startsWith('box/', 1) === true)) ? '' : `
-      <p class="login"><a href="/box/">로그인</a></p>`}
+      <${titleTag} class="site-title"><a href="/">${siteNode}</a></${titleTag}>
+      ${(hideLogin || (path?.startsWith('box/', 1) === true)) ? `\
+<theme-panel data-dark="어둡게" data-light="밝게"></theme-panel>` : `\
+<p class="login"><a href="/box/">로그인</a></p>`}
     </div>
   </header>
   <main class="main">
     <div id="main-content" class="content main-content">
-      ${content.render(6)}
+      ${content.toString(6)}
     </div>
   </main>
   <footer class="footer">
@@ -76,7 +80,7 @@ export default (page, site, content) => {
       <a href="${footerURL}">${footerLabel}</a>
     </address>
   </footer>${(beforeBodyEnd === undefined) ? '' : `
-  ${beforeBodyEnd.render(2)}`}
+  ${beforeBodyEnd.toString(2)}`}
 </body>
 </html>
 `;

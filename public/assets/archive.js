@@ -4,13 +4,14 @@
 import { handleError } from './error.js';
 
 const form = document.getElementById('import');
-const button = document.getElementById('import-submit');
+const input = form.elements.file;
+const button = form.querySelector('[type=submit]');
 
-const submit = form.onsubmit = async (event) => {
+form.onsubmit = async function submit(event) {
   event.preventDefault();
   form.onsubmit = (event) => event.preventDefault();
   button.disabled = true;
-  const { files } = form.elements.file;
+  const { files } = input;
   if (files.length === 0) return;
   try {
     await fetch(form.action, {

@@ -38,7 +38,7 @@ export default (page, site, content) => {
     <p class="admin-nav-heading">관리 메뉴</p>
     <ul class="admin-nav-list">${prettify(paths.reduce((code, path) => code + `
       <li class="admin-nav-item">${(path === current) ?
-        `<b>${labels[path]}</b>` :
+        `<h1 class="admin-nav-current">${labels[path]}</h1>` :
         `<a href="${path}">${labels[path]}</a>`
       }</li>`, ''))}
     </ul>

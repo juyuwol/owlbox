@@ -30,8 +30,11 @@
 }
 .admin-nav-heading,
 .admin-nav-list,
-.admin-nav-item {
+.admin-nav-item,
+.admin-nav-current {
   display: inline;
+  font-size: 1rem;
+  margin: 0;
   padding: 0;
 }
 .admin-nav-heading:after {
@@ -56,6 +59,11 @@
   min-width: 3em;
 }
 .box-post-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--hld) 12px;
+  justify-content: space-between;
   font-weight: normal;
   font-size: 1rem;
 }
@@ -76,7 +84,7 @@
 }
 .settings-field {
   display: flex;
-	align-items: center;
+  align-items: center;
   white-space: pre;
 }
 .settings-field + br,

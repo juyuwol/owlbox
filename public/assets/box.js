@@ -13,9 +13,10 @@ const pages = new Map();
 const urls = new Set();
 
 const {
-  perPage,
   offset,
   offsetMilliseconds,
+  perPage,
+  postDir,
   unrepliedConfirm,
   unrepliedOK,
   repliedConfirm,
@@ -191,7 +192,10 @@ function createUnrepliedCreator(createPublished) {
     form.onsubmit = (event) => event.preventDefault();
     messageBox.readOnly = replyBox.readOnly = button.disabled = true;
     try {
-      const data = Object.fromEntries(new FormData(form));
+      const entries = new FormData(form);
+      const color = entries.get('color');
+      if (color === '') entries.delete('color');
+      const data = Object.fromEntries(entries);
       const res = await fetch(form.action, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -215,14 +219,20 @@ function createUnrepliedCreator(createPublished) {
 
   const template = document.getElementById('box-unreplied').content.firstElementChild;
   const sentText = template.querySelector('.sent').lastChild;
-  const { id: idInput, sent: sentInput } = template.elements;
+  const { color: colorBox, id: idInput, sent: sentInput } = template.elements;
+  const colorMap = new Map();
+  for (let i = colorBox.length - 1; i > 0; --i) {
+    colorMap.set(colorBox.item(i).value, i);
+  }
 
   return (post) => {
-    sentText.data = sentInput.value = post.sent;
+    const { color } = post;
     const id = idInput.value = post.id;
+    sentText.data = sentInput.value = post.sent;
     const form = template.cloneNode(true);
     const countText = form.querySelector('.count').lastChild;
-    const messageBox = form.elements.message;
+    const { color: colorBox, message: messageBox } = form.elements;
+    if (color !== undefined) colorBox.item(colorMap.get(color)).selected = true;
     form.setAttribute('id', id);
     form.onsubmit = submit;
     messageBox.value = post.message;
@@ -273,6 +283,7 @@ function createRepliedCreator() {
   const { id: idInput, reply: replyBox } = template.elements;
 
   return (post) => {
+    const { color } = post;
     const id = idInput.value = post.id;
     const reply = replyBox.value = replyText.data = post.reply;
     const postURL = pathById(id);
@@ -282,6 +293,12 @@ function createRepliedCreator() {
     repliedText.data = post.replied;
     tweetLink.search = new URLSearchParams({ text: `${reply} ${postURL}` });
     const form = template.cloneNode(true);
+    const colorBox = form.querySelector('.color');
+    if (color === undefined) {
+      colorBox.remove();
+    } else {
+      colorBox.lastChild.data = color;
+    }
     form.setAttribute('id', id);
     form.onsubmit = submit;
     return form;
@@ -473,7 +490,7 @@ function local(date) {
 }
 
 function pathById(id) {
-  return `${baseURL}/posts/${id}.html`;
+  return `${baseURL}/${postDir}/${id}.html`;
 }
 
 function normalizeDateTime(datetime) {

@@ -4,7 +4,7 @@
 'use strict';
 (() => {
 
-const message = sessionStorage.getItem('message');
+const message = localStorage.getItem('message');
 if (message === null) return;
 customElements.define('confirm-section', class extends HTMLElement {
   connectedCallback() {

@@ -2,12 +2,13 @@ class Block extends Array {
   space = 0;
 
   render(space) {
-    if (space > 0) this.space += space;
-    return this;
+    const block = this.slice();
+    block.space = this.space + space;
+    return block;
   }
 
-  toString() {
-    return this.join('\n' + ' '.repeat(this.space));
+  toString(space = 0) {
+    return this.join('\n' + ' '.repeat(this.space + space));
   }
 }
 
@@ -52,33 +53,32 @@ export function prettify(str) {
 }
 
 export function pretty(strs, ...exps) {
-  const block = new Block('');
-  const values = exps.values();
-  let i = 0;
-  for (const str of strs) {
-    const { value, done } = values.next();
-    if (str.length > 0) {
-      const lines = str.split('\n');
-      const values = lines.values();
-      block[i] += values.next().value;
-      if (lines.length > 1) {
-        i = block.push(...values) - 1;
-      }
-    }
-    if (done === true) continue;
-    if (value instanceof Block) {
-      let values = value.values();
-      block[i] += values.next().value;
-      if (value.length > 1) {
-        const { space } = value;
-        if (space > 0) {
-          const gap = ' '.repeat(space);
-          values = values.map(e => gap + e);
-        }
-        i = block.push(...values) - 1;
-      }
+  const block = Block.from(strs[0].split('\n'));
+  const end = exps.length;
+  let i = 0, k = block.length - 1;
+  while (i < end) {
+    const exp = exps[i], str = strs[++i];
+    if (!(exp instanceof Block)) {
+      block[k] += exp;
+    } else if (exp.length === 1) {
+      block[k] += exp[0];
     } else {
-      block[i] += value;
+      const { space } = exp;
+      let values = exp.values();
+      block[k] += values.next().value;
+      if (space > 0) {
+        const gap = ' '.repeat(space);
+        values = values.map(e => gap + e);
+      }
+      k = block.push(...values) - 1;
+    }
+    if (str === '') continue;
+    const index = str.indexOf('\n');
+    if (index === -1) {
+      block[k] += str;
+    } else {
+      if (index > 0) block[k] += str.slice(0, index);
+      k = block.push(...str.slice(index + 1).split('\n')) - 1;
     }
   }
   return block;

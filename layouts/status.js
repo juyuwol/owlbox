@@ -14,6 +14,6 @@ export default (page, site) => {
   }
   return render(page, site, prettify(`\
 <h1>${h(page.title)}</h1>
-<p>${h(page.detail)}</p>${!doConfirm ? '' : `
-<confirm-section></confirm-section>`}`));
+<p>${h(page.detail)}</p>${doConfirm ? `
+<confirm-section></confirm-section>` : ''}`));
 }

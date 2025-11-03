@@ -61,13 +61,15 @@ export const GET = () => respondError(405, { 'allow': 'POST' });
 export const POST = deactivated ? (() => respondError(404)) : async (req) => {
   const timestamp = Date.now();
   const id = timestamp.toString(36) + '0';
-  const post = { id, sent: local(timestamp), message: '', ip: ipAddress(req) };
+  const post = { id, sent: local(timestamp), ip: ipAddress(req), message: '' };
   try {
     const form = await req.formData();
     const value = form.get('message');
     if (value === null) throw new Error();
-    const { length } = post.message = value.trimEnd().replaceAll('\r\n', '\n');
-    if ((length === 0) || (length > maxLength)) throw new Error();
+    const message = post.message = value.trimEnd().replaceAll('\r\n', '\n');
+    if ((message === '') || (message.length > maxLength)) throw new Error();
+    const color = form.get('color');
+    if (color) post.color = color;
   } catch (e) {
     return respondError(400);
   }

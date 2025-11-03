@@ -1,7 +1,7 @@
 import { configGitHub, http, json, local, respondError, updateJSON } from '../src/vercel.js';
 import site from '../config.js';
 
-const { timeOffset } = site;
+const { suffix, timeOffset } = site;
 
 function assign(data, updates) {
   const { sent } = Object.assign(data, updates);
@@ -18,7 +18,7 @@ export async function DELETE(req) {
   const files = [];
   for (const id of res) files.push(
     { mode: '100644', type: 'blob', sha: null, path: `data/unproxied/${id}.json` },
-    { mode: '100644', type: 'blob', sha: null, path: `public/images/${id}.png` },
+    { mode: '100644', type: 'blob', sha: null, path: `public/images${suffix}/${id}.png` },
   );
 
   const { baseURL, headers, branch } = configGitHub();

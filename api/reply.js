@@ -1,33 +1,42 @@
 import { readFile } from 'node:fs/promises';
 import CanvasKitInit from 'canvaskit-wasm';
-import { fonts, style } from '../layouts/card.js';
+import { colors, fonts, style } from '../layouts/card.js';
 import { ImageBuilder } from '../src/image.js';
 import { KV_KEY, configGitHub, http, json, kv, local, respondError } from '../src/vercel.js';
+import site from '../config.js';
 
-const dir = process.cwd();
 const initingCanvasKit = CanvasKitInit();
-const fontFiles = await Promise.all(fonts.map(e => readFile(`${dir}/fonts/${e}`)));
+const fontDir = process.cwd() + '/fonts/';
+const fontFiles = await Promise.all(fonts.map(e => readFile(fontDir + e)));
 const CanvasKit = await initingCanvasKit;
+const { suffix } = site;
 
 export async function POST(req) {
   const timestamp = Date.now();
-  let id = '', sent = '', message = '', reply = '';
+  let id = '', sent = '', message = '', reply = '', color;
   try {
-    ({ id, sent, message, reply } = await req.json());
+    ({ id, sent, message, reply, color } = await req.json());
   } catch (error) {
     return respondError(400, error.message);
   }
 
-  const { baseURL, headers, branch } = configGitHub();
-  const ref = encodeURIComponent(branch);
-  const replied = local(timestamp);
+  const hasColor = color ? colors.hasOwnProperty(color) : false;
+  const imageStyle = hasColor ? { ...style, frameColor: colors[color] } : style;
   try {
-    const image = ImageBuilder.generate(CanvasKit, fontFiles, style, message);
+    const image = ImageBuilder.generate(CanvasKit, fontFiles, imageStyle, message);
+    const content = JSON.stringify({
+      id,
+      sent,
+      message,
+      replied: local(timestamp),
+      reply,
+      width: image.width,
+      height: image.height,
+      color,
+    }, undefined, 2) + '\n';
 
-    const { width, height } = image;
-    const post = { id, sent, message, replied, reply, width, height };
-    const content = JSON.stringify(post, undefined, 2) + '\n';
-
+    const { baseURL, headers, branch } = configGitHub();
+    const ref = encodeURIComponent(branch);
     const [
       { commit: { tree: { sha: baseTree } }, sha: commit },
       { sha: blob },
@@ -52,14 +61,12 @@ export async function POST(req) {
     // https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#create-a-tree
     const { sha: tree } = await json(`${baseURL}/git/trees`, {
       method: 'POST',
-      headers,
-      body: JSON.stringify({
-        base_tree: baseTree,
-        tree: [
-          { mode: '100644', type: 'blob', path: `data/unproxied/${id}.json`, content },
-          { mode: '100644', type: 'blob', path: `public/images/${id}.png`, sha: blob },
-        ],
-      }),
+      headers, // No need to escape sha and id
+      body: `{"base_tree":"${baseTree}","tree":[\
+{"mode":"100644","type":"blob","path":"data/unproxied/${id}.json",\
+"content":${JSON.stringify(content)}},\
+{"mode":"100644","type":"blob","path":"public/images${suffix}/${id}.png",\
+"sha":"${blob}"}]}`,
     }, 'Failed to create a tree.');
 
     // Create a commit that uses the tree created above

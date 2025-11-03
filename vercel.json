@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node src/build.js --output public --production",
+  "buildCommand": "node src/build.js -o public -m production",
   "outputDirectory": "public",
   "headers": [
     {

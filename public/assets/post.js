@@ -2,34 +2,32 @@
 // SPDX-License-Identifier: 0BSD
 
 fetch('index.txt').then(async (res) => {
-  const id = location.pathname.slice(7, -5); // '/posts/'.length: 7, '.html'.length: 5
+  const post = location.pathname;
+  const id = post.slice(post.lastIndexOf('/') + 1, -5); // '.html'.length: 5
   const ids = (await res.text()).slice(0, -1).split('\n');
   const perPage = +ids.pop();
-  const index = ids.findIndex(e => (e === id));
+  const index = ids.indexOf(id);
   if (index < perPage) return;
   const link = document.getElementById('list-link');
-  link.href = `/lists/${Math.trunc(index / perPage) + 1}.html`;
+  const list = link.pathname;
+  const page = Math.trunc(index / perPage) + 1;
+  link.setAttribute('href', list.slice(0, list.lastIndexOf('/') + 1) + `${page}.html`);
 }).catch(() => {});
 
 const image = document.createElement('img');
-const checkbox = document.getElementById('toggle-image');
+const checkbox = document.getElementById('image-toggle');
 const message = document.querySelector('.post-message');
-const parent = message.parentNode;
-checkbox.disabled = checkbox.checked = false;
+checkbox.disabled = false;
 checkbox.onchange = () => {
-  if (checkbox.checked) {
-    const { head } = document;
-    image.src = head.querySelector('meta[property="og:image"]').content;
-    image.width = head.querySelector('meta[property="og:image:width"]').content;
-    image.height = head.querySelector('meta[property="og:image:height"]').content;
-    image.alt = message.textContent;
-    parent.replaceChild(image, message);
-    checkbox.onchange = () => void (
-      checkbox.checked ?
-      parent.replaceChild(image, message) :
-      parent.replaceChild(message, image)
-    );
-  } else {
-    parent.replaceChild(message, image);
-  }
+  if (!checkbox.checked) return image.replaceWith(message);
+  const { head } = document;
+  image.alt = message.textContent;
+  image.src = head.querySelector('meta[property="og:image"]').content;
+  image.setAttribute('width', head.querySelector('meta[property="og:image:width"]').content);
+  image.setAttribute('height', head.querySelector('meta[property="og:image:height"]').content);
+  message.replaceWith(image);
+  checkbox.onchange = () => (checkbox.checked ?
+    message.replaceWith(image) :
+    image.replaceWith(message)
+  );
 };

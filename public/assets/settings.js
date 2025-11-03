@@ -4,7 +4,7 @@
 import { handleError } from './error.js';
 
 const form = document.getElementById('settings');
-const button = document.getElementById('settings-submit');
+const button = form.querySelector('[type=submit]');
 const schema = JSON.parse(form.dataset.schema);
 const initializers = {
   boolean: (value) => (value === 'on'),
