@@ -165,19 +165,10 @@ export declare type renderList = (list: List, site: Site) => string;
 export declare type renderPost = (post: Post, site: Site) => string;
 
 /**
- * Hooks called at different stages of the rendering process.
- * Currently only `prerender` is supported, but more may be added in future.
- */
-export declare type hooks = {
-  /** Called before rendering begins. Output directories may not exist yet. */
-  prerender?: (site: Site) => void;
-};
-
-/**
- * Custom pages configuration.
+ * Initialize pages configuration.
  * Should include `/submit/ok.html` and `/404.html` pages.
  */
-export declare type pages = {
+export declare type createPages = (site: Site) => {
   /**
    * Page configuration where the key is the URL path.
    * Each key becomes the `path` property of the resulting `Page` instance,
