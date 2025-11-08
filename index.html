@@ -14,8 +14,8 @@
 <body>
 <h1>카드 설정 도우미</h1>
 <p class="description"><a href="https://github.com/juyuwol/owlbox">부엉이 사서함</a> 사용자를 위한 카드 설정 도우미입니다. 출력 결과를 미리 보기로 확인해 가며 설정을 조정하고, 그에 따라 모듈 파일을 생성할 수 있습니다.</p>
-<form id="generator" class="generator" autocomplete="off">
-  <p class="preview"><img id="preview" class="preview-image" src="fallback.png" alt="미리 보기" width="900" height="472"></p>
+<form id="generator" autocomplete="off">
+  <img id="preview" src="fallback.png" alt="미리 보기" width="900" height="472">
   <fieldset class="fonts">
     <legend>글꼴</legend>
     <p>
@@ -26,7 +26,7 @@
       <input id="file" type="file" multiple="">
       <button id="upload" type="button" disabled="">추가</button><br>
     </p>
-    <p class="small">라이선스상 <strong>임베딩</strong>과 <strong>웹사이트 내 이미지</strong> 부문의 사용이 허가된 폰트 파일을 사용할 수 있습니다.</p>
+    <p class="font-description">라이선스상 <strong>임베딩</strong>과 <strong>웹사이트 내 이미지</strong> 부문의 사용이 허가된 폰트 파일을 사용할 수 있습니다.</p>
     <ol id="fonts">
       <li>
         <label><input name="font" type="checkbox" value="NotoSansKR-Regular.woff2"> NotoSansKR-Regular.woff2</label>
@@ -42,14 +42,14 @@
   </fieldset>
   <div class="fields">
     <p><label>배경 색상: <input name="backgroundColor" type="text" value="#ffffff" data-coloris=""></label></p>
-    <p><label>프레임 색상: <input name="frameColor" type="text" value="#bbbbbb" data-coloris=""></label></p>
+    <p><label>테두리 색상: <input name="frameColor" type="text" value="#bbbbbb" data-coloris=""></label></p>
     <p><label>글자 색상: <input name="textColor" type="text" value="#000000" data-coloris=""></label></p>
     <p><label>글자 크기: <input name="fontSize" type="number" min="1" value="28"> px</label></p>
     <p><label>행간: <input name="lineHeight" type="number" min="100" value="160"> %</label></p>
-    <p><label>프레임 가로줄 두께: <input name="horizontalFrameThickness" type="number" min="0" value="42"> px</label></p>
-    <p><label>프레임 세로줄 두께: <input name="verticalFrameThickness" type="number" min="0" value="28"> px</label></p>
-    <p><label>프레임 X 좌표: <input name="frameLeft" type="number" min="0" value="0"> px</label></p>
-    <p><label>프레임 Y 좌표: <input name="frameTop" type="number" min="0" value="0"> px</label></p>
+    <p><label>테두리 가로줄 두께: <input name="horizontalFrameThickness" type="number" min="0" value="42"> px</label></p>
+    <p><label>테두리 세로줄 두께: <input name="verticalFrameThickness" type="number" min="0" value="28"> px</label></p>
+    <p><label>테두리 X 좌표: <input name="frameLeft" type="number" min="0" value="0"> px</label></p>
+    <p><label>테두리 Y 좌표: <input name="frameTop" type="number" min="0" value="0"> px</label></p>
     <p><label>글 상자 X 좌표: <input name="contentLeft" type="number" min="0" value="70"> px</label></p>
     <p><label>글 상자 Y 좌표: <input name="minContentTop" type="number" min="0" value="84"> px</label></p>
     <p><label>미리보기 내용:<br>
@@ -59,7 +59,7 @@
 </form>
 <h2>설정 파일 출력</h2>
 <div class="output">
-  <textarea id="output" class="code" cols="50" rows="20" readonly="" autocomplete="off">export const colors = {
+  <textarea id="output" cols="50" rows="20" readonly="" autocomplete="off">export const colors = {
   빨간색: [0xdd, 0x2e, 0x44], // #dd2e44
   주황색: [0xf4, 0x90, 0x0c], // #f4900c
   노란색: [0xfd, 0xcb, 0x58], // #fdcb58

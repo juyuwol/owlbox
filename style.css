@@ -6,16 +6,16 @@ body {
   box-sizing: border-box;
   margin-inline: auto;
   padding-inline: 8px;
-  max-width: 928px;
+  max-width: 880px;
 }
 footer,
 fieldset {
   margin-block: 1.5em;
+  margin-inline: 0;
 }
 ol,
 p {
   margin-block: 0.5em;
-  max-width: 40em;
 }
 h1,
 h2 {
@@ -23,16 +23,33 @@ h2 {
 }
 textarea {
   box-sizing: border-box;
+  line-height: inherit;
+  padding: 0.25em 0.5em;
   max-width: 100%;
+}
+br + textarea {
+  margin-block-start: 0.25em;
+}
+[type=text],
+[type=color],
+[type=number] {
+  line-height: inherit;
+  padding: 0 0.25em;
+}
+[type=number] {
+  width: 4em;
+}
+code,
+textarea,
+input {
+  font-family: monospace, monospace;
+  font-size: smaller;
 }
 .description {
   margin-block: 0 1.5em;
   word-break: keep-all;
 }
-.preview {
-  margin-block-start: 0;
-}
-.preview-image {
+[id=preview] {
   border: 1px solid currentColor;
   box-sizing: border-box;
   display: block;
@@ -41,12 +58,18 @@ textarea {
   max-width: 100%;
   height: auto;
 }
-.code {
+.font-description {
+  margin-block: 1em;
+  word-break: keep-all;
+}
+[name=message] {
+  width: 100%;
+  max-width: calc(2px + 32em);
+}
+[id=output] {
   display: block;
   margin-block: 0 1.5em;
-}
-.small {
-  font-size: smaller;
+  width: calc(2px + 27em);
 }
 @media (min-width: 640px) {
   p:first-child {
@@ -55,18 +78,18 @@ textarea {
   p:last-child {
     margin-block-end: 0;
   }
-  .generator {
+  [id=generator] {
     display: grid;
-    gap: 1.5em 8px;
-    grid-template-columns: 1fr 1fr;
+    gap: 1.5em 16px;
+    grid-template-columns: 4fr 3fr;
     grid-template-rows: auto auto;
   }
-  .preview {
-    grid-column: 1 / 3;
-    grid-row: 1 / 2;
+  [id=preview] {
+    grid-column: span 2;
     margin-block: 0;
   }
   .fonts {
+    box-sizing: border-box;
     grid-column: 1 / 2;
     grid-row: 2 / 3;
     margin-block: 0;
@@ -77,18 +100,20 @@ textarea {
   }
   .output {
     display: flex;
-    gap: 0 8px;
+    gap: 0 16px;
   }
-  .code {
+  [id=output] {
+    flex-shrink: 0;
     margin-block: 0;
   }
 }
-@media (min-width: 928px) {
-  .generator {
+@media (min-width: 880px) {
+  [id=generator] {
+    grid-template-columns: 452px auto;
     grid-template-rows: auto 1fr;
   }
-  .preview {
-    grid-column: 1 / 2;
+  [id=preview] {
+    grid-column: 1;
   }
   .fields {
     grid-row: 1 / 3;
