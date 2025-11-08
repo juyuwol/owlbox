@@ -5,11 +5,10 @@
 <title>카드 설정 도우미</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="coloris.css">
+<script type="module" src="color.js"></script>
 <script type="module" src="canvaskit.js"></script>
 <script type="module" src="image.js"></script>
 <script type="module" src="generator.js"></script>
-<script src="coloris.js"></script>
 </head>
 <body>
 <h1>카드 설정 도우미</h1>
@@ -41,9 +40,9 @@
     </ol>
   </fieldset>
   <div class="fields">
-    <p><label>배경 색상: <input name="backgroundColor" type="text" value="#ffffff" data-coloris=""></label></p>
-    <p><label>테두리 색상: <input name="frameColor" type="text" value="#bbbbbb" data-coloris=""></label></p>
-    <p><label>글자 색상: <input name="textColor" type="text" value="#000000" data-coloris=""></label></p>
+    <p><label>배경 색상: <input name="backgroundColor" type="text" value="#ffffff"></label> <input type="color" value="#ffffff" data-name="backgroundColor"></p>
+    <p><label>테두리 색상: <input name="frameColor" type="text" value="#bbbbbb"></label> <input type="color" value="#bbbbbb" data-name="frameColor"></p>
+    <p><label>글자 색상: <input name="textColor" type="text" value="#000000"></label> <input type="color" value="#000000" data-name="textColor"></p>
     <p><label>글자 크기: <input name="fontSize" type="number" min="1" value="28"> px</label></p>
     <p><label>행간: <input name="lineHeight" type="number" min="100" value="160"> %</label></p>
     <p><label>테두리 가로줄 두께: <input name="horizontalFrameThickness" type="number" min="0" value="42"> px</label></p>

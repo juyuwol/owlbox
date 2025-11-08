@@ -31,18 +31,23 @@ br + textarea {
   margin-block-start: 0.25em;
 }
 [type=text],
-[type=color],
 [type=number] {
-  line-height: inherit;
   padding: 0 0.25em;
-}
-[type=number] {
   width: 4em;
+}
+[type=color] {
+  box-sizing: content-box;
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0;
+  width: 44px;
+  height: 1.5em;
 }
 code,
 textarea,
 input {
   font-family: monospace, monospace;
+  line-height: inherit;
   font-size: smaller;
 }
 .description {
