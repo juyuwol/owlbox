@@ -3,7 +3,7 @@ const NON_HEX = /[^0-9A-Fa-f]/;
 
 const defaultFonts = {};
 const fontList = document.getElementById('fonts');
-const resetButton = document.getElementById('reset');
+const resetButton = document.getElementById('font-reset');
 
 export const generatorForm = document.getElementById('generator');
 export const generatorControls = generatorForm.elements;
@@ -20,34 +20,34 @@ export const promise = Promise.all([
 
 for (const color of document.querySelectorAll('[type=color][data-name]')) {
   const item = color.form.elements[color.getAttribute('data-name')];
-  const isList = (item instanceof RadioNodeList);
-  const text = isList ? item[color.getAttribute('data-index')] : item;
+  const multiple = (item instanceof RadioNodeList);
+  const text = multiple ? item[color.getAttribute('data-index')] : item;
   connectColorPicker(color, text);
   color.disabled = false;
 }
 
-const itemUp = (event) => {
+const moveUp = (event) => {
   if (!moveItem(event.currentTarget, 'previous', 'before')) return;
   resetButton.disabled = false;
 };
 
-const itemDown = (event) => {
+const moveDown = (event) => {
   if (!moveItem(event.currentTarget, 'next', 'after')) return;
   resetButton.disabled = false;
 };
 
 const addFont = (() => {
-  const { content } = document.getElementById('font-item');
-  const checkbox = content.querySelector('[type=checkbox]');
-  const labelText = content.querySelector('label').lastChild;
+  const itemTemplate = document.getElementById('font-item').content;
+  const checkbox = itemTemplate.querySelector('[type=checkbox]');
+  const labelText = itemTemplate.querySelector('label').lastChild;
   return (name, buffer) => {
     fontMap.set(name, buffer);
     checkbox.value = name;
     labelText.data = ` ${name}`;
-    const item = content.cloneNode(true);
-    item.querySelector('[data-dir=up]').onclick = itemUp;
-    item.querySelector('[data-dir=down]').onclick = itemDown;
-    fontList.append(item);
+    const item = itemTemplate.cloneNode(true);
+    item.querySelector('[data-dir=up]').onclick = moveUp;
+    item.querySelector('[data-dir=down]').onclick = moveDown;
+    fontList.prepend(item);
   };
 })();
 
@@ -61,17 +61,17 @@ resetButton.onclick = () => {
 };
 
 for (const button of fontList.querySelectorAll('[data-dir=up]')) {
-  button.onclick = itemUp;
+  button.onclick = moveUp;
   button.disabled = false;
 }
 
 for (const button of fontList.querySelectorAll('[data-dir=down]')) {
-  button.onclick = itemDown;
+  button.onclick = moveDown;
   button.disabled = false;
 }
 
 {
-  const removeButton = document.getElementById('remove');
+  const removeButton = document.getElementById('font-remove');
   removeButton.onclick = () => {
     removeButton.disabled = true;
     resetButton.disabled = false;
@@ -95,8 +95,8 @@ for (const checkbox of fontList.querySelectorAll('[name=font]')) {
 }
 
 {
-  const fileSelector = document.getElementById('file');
-  const uploadButton = document.getElementById('upload');
+  const fileInput = document.getElementById('font-file');
+  const uploadButton = document.getElementById('font-upload');
 
   const addFontFromFile = async (file) => {
     const { name } = file;
@@ -107,31 +107,31 @@ for (const checkbox of fontList.querySelectorAll('[name=font]')) {
     addFont(name, await file.arrayBuffer());
   };
 
-  fileSelector.onchange = () => {
-    uploadButton.disabled = (fileSelector.files.length === 0);
+  fileInput.onchange = () => {
+    uploadButton.disabled = (fileInput.files.length === 0);
   };
 
   uploadButton.onclick = async function upload() {
     uploadButton.onclick = null;
     uploadButton.disabled = true;
     resetButton.disabled = false;
-    const { files } = fileSelector;
+    const { files } = fileInput;
     await (
       (files.length > 1) ?
       Promise.all(Array.from(files, addFontFromFile)) :
       addFontFromFile(files[0])
     );
-    fileSelector.value = '';
+    fileInput.value = '';
     uploadButton.onclick = upload;
   };
 }
 
 {
-  const urlTextbox = document.getElementById('url');
-  const loadButton = document.getElementById('load');
+  const urlInput = document.getElementById('font-url');
+  const loadButton = document.getElementById('font-load');
 
-  urlTextbox.oninput = () => {
-    if (urlTextbox.value.length === 0) {
+  urlInput.oninput = () => {
+    if (urlInput.value.length === 0) {
       loadButton.disabled = true;
     } else if (loadButton.disabled) {
       loadButton.disabled = false;
@@ -139,17 +139,19 @@ for (const checkbox of fontList.querySelectorAll('[name=font]')) {
   };
 
   loadButton.onclick = async () => {
-    const url = urlTextbox.value;
+    const url = urlInput.value;
     if (!url) return;
     let name = '';
     try {
-      name = decodeURIComponent(new URL(url).pathname);
+      name = decodeURIComponent(new URL(url).pathname.slice(1));
     } catch (e) {
       return;
     }
-    if (name.endsWith('/')) name = name.slice(0, -1);
-    name = name.slice(name.lastIndexOf('/') + 1);
-    while ((name === '') || fontMap.has(name)) {
+    if (name) {
+      const length = name.length - +name.endsWith('/');
+      name = name.slice(name.lastIndexOf('/', length - 1) + 1, length);
+    }
+    while (!name || fontMap.has(name)) {
       name = window.prompt(`파일명이 '${name
       }'인 폰트를 등록할 수 없습니다. 등록할 파일명을 입력해 주세요.`, name);
       if (name === null) return;
@@ -163,7 +165,7 @@ for (const checkbox of fontList.querySelectorAll('[name=font]')) {
     } catch (e) {
       return window.alert('URL로부터 폰트를 가져오지 못했습니다.');
     }
-    urlTextbox.value = '';
+    urlInput.value = '';
   };
 }
 
@@ -171,13 +173,13 @@ const paletteForm = document.getElementById('palette');
 const paletteControls = paletteForm.elements;
 
 {
-  const template = document.getElementById('color-item').content.firstElementChild;
+  const itemTemplate = document.getElementById('color-item').content;
   const removeButton = document.getElementById('color-remove');
   const addButton = document.getElementById('color-add');
   const colorList = document.getElementById('colors');
 
-  const itemUp = (event) => void moveItem(event.currentTarget, 'previous', 'before');
-  const itemDown = (event) => void moveItem(event.currentTarget, 'next', 'after');
+  const moveUp = (event) => void moveItem(event.currentTarget, 'previous', 'before');
+  const moveDown = (event) => void moveItem(event.currentTarget, 'next', 'after');
   const toggleRemoveButton = (event) => {
     if (event.currentTarget.checked) {
       removeButton.disabled = false;
@@ -198,12 +200,12 @@ const paletteControls = paletteForm.elements;
   };
 
   addButton.onclick = () => {
-    const item = template.cloneNode(true);
+    const item = itemTemplate.cloneNode(true);
     const color = item.querySelector('[type=color]');
     const text = item.querySelector('[name=value]');
     item.querySelector('[name=checkbox]').onchange = toggleRemoveButton;
-    item.querySelector('[data-dir=up]').onclick = itemUp;
-    item.querySelector('[data-dir=down]').onclick = itemDown;
+    item.querySelector('[data-dir=up]').onclick = moveUp;
+    item.querySelector('[data-dir=down]').onclick = moveDown;
     connectColorPicker(color, text);
     colorList.append(item);
   };
@@ -216,12 +218,12 @@ const paletteControls = paletteForm.elements;
   }
 
   for (const button of colorList.querySelectorAll('[data-dir=up]')) {
-    button.onclick = itemUp;
+    button.onclick = moveUp;
     button.disabled = false;
   }
 
   for (const button of colorList.querySelectorAll('[data-dir=down]')) {
-    button.onclick = itemDown;
+    button.onclick = moveDown;
     button.disabled = false;
   }
 }
@@ -229,9 +231,9 @@ const paletteControls = paletteForm.elements;
 export const updateOutput = (() => {
   const outputBox = document.getElementById('output');
   const downloadLink = document.getElementById('download');
-  const values = [
+  const snippets = [
     createColors(paletteControls),
-    createCard(generatorControls, getStyle(generatorControls)),
+    createCard(Object.keys(defaultFonts), getStyle(generatorControls)),
   ];
 
   let fileURL = '';
@@ -242,9 +244,9 @@ export const updateOutput = (() => {
     downloadLink.setAttribute('href', fileURL);
   };
 
-  return (value, index) => {
-    values[index] = value;
-    outputBox.value = values.join('\n');
+  return (snippet, index) => {
+    snippets[index] = snippet;
+    outputBox.value = snippets.join('\n');
     URL.revokeObjectURL(fileURL);
     fileURL = '';
   };
@@ -263,20 +265,26 @@ function connectColorPicker(color, text) {
   text.onchange = () => normalizeColor(color, text);
 }
 
+function createColor(key, value) {
+  const id = NON_HANGEUL_ID.test(key) ? JSON.stringify(key) : key;
+  return `  ${id}: ${toRGBArray(value)}, // ${value}\n`;
+}
+
 function createColors(controls) {
-  let colors = 'export const colors = ';
-  const keys = controls.key;
-  if (keys === undefined) return colors + 'null;\n';
-  const values = controls.value;
-  const end = keys.length;
-  colors += '{\n';
-  for (let i = 0; i < end; ++i) {
-    const value = values[i].value;
-    const key = keys[i].value;
-    const id = NON_HANGEUL_ID.test(key) ? JSON.stringify(key) : key;
-    colors += `  ${id}: ${toRGBArray(value)}, // ${value}\n`;
+  let snippet = 'export const colors = {';
+  const item = controls.key;
+  if (item === undefined) {
+  } else if (item instanceof RadioNodeList) {
+    const values = controls.value;
+    const end = item.length;
+    snippet += '\n';
+    for (let i = 0; i < end; ++i) {
+      snippet += createColor(item[i].value, values[i].value);
+    }
+  } else {
+    snippet += '\n' + createColor(item.value, controls.value.value);
   }
-  return colors + '};\n';
+  return snippet + '};\n';
 }
 
 function findLIAncestor(element) {
@@ -313,11 +321,11 @@ function normalizeColor(color, text) {
   text.value = color.value;
 }
 
-function parseColor(color) {
+function parseColor(hexColor) {
   return [
-    Number.parseInt(color.slice(1, 3), 16),
-    Number.parseInt(color.slice(3, 5), 16),
-    Number.parseInt(color.slice(5, 7), 16),
+    Number.parseInt(hexColor.slice(1, 3), 16),
+    Number.parseInt(hexColor.slice(3, 5), 16),
+    Number.parseInt(hexColor.slice(5, 7), 16),
   ];
 }
 
@@ -325,22 +333,18 @@ function toHexColor({ 0: r, 1: g, 2: b }) {
   return '#' + ((r * 0x10000) + (g * 0x100) + b).toString(16).padStart(6, '0');
 }
 
-function toRGBArray(hex) {
-  return `[0x${hex.slice(1, 3)}, 0x${hex.slice(3, 5)}, 0x${hex.slice(5)}]`;
+function toRGBArray(hexColor) {
+  return `[0x${hexColor.slice(1, 3)}, 0x${hexColor.slice(3, 5)
+  }, 0x${hexColor.slice(5, 7)}]`;
 }
 
-export function createCard(controls, style) {
+export function createCard(fontNames, style) {
+  const fonts = JSON.stringify(fontNames, undefined, 2).slice(0, -2) + ',\n]';
   const backgroundColor = toHexColor(style.backgroundColor);
   const frameColor = toHexColor(style.frameColor);
   const textColor = toHexColor(style.textColor);
-  const item = controls.font;
-  const fonts = (
-    (item instanceof HTMLInputElement) ?
-    [item.value] :
-    Array.from(item, (e) => e.value)
-  );
   return `\
-export const fonts = ${JSON.stringify(fonts, undefined, 2)};
+export const fonts = ${fonts};
 
 export const style = {
   backgroundColor: ${toRGBArray(backgroundColor)}, // ${backgroundColor}

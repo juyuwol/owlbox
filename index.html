@@ -18,22 +18,22 @@
 <p class="description"><a href="https://github.com/juyuwol/owlbox">부엉이 사서함</a> 사용자를 위한 카드 설정 도우미입니다. 출력 결과를 미리 보기로 확인해 가며 설정을 조정하고, 그에 따라 설정 파일을 생성할 수 있습니다.</p>
 <form id="generator" autocomplete="off">
   <img id="preview" src="fallback.png" alt="미리 보기" width="900" height="472">
-  <fieldset class="fonts">
+  <fieldset class="font-section">
     <legend>글꼴</legend>
     <p>
-      <button id="remove" type="button" disabled="">삭제</button>
-      <button id="reset" type="button" disabled="">리셋</button>
+      <button id="font-remove" type="button" disabled="">삭제</button>
+      <button id="font-reset" type="button" disabled="">리셋</button>
     </p>
     <p class="field-add">
-      <input id="file" type="file" multiple="">
+      <input id="font-file" type="file" multiple="">
       <span class="spacing-after"></span>
-      <button id="upload" type="button" disabled="">파일 추가</button>
+      <button id="font-upload" type="button" disabled="">파일 추가</button>
     </p>
     <p class="field-add">
       <label class="spacing-after" for="url">URL:</label>
-      <input id="url" type="url">
+      <input id="font-url" type="url">
       <span class="spacing-after"></span>
-      <button id="load" type="button" disabled="">URL 추가</button>
+      <button id="font-load" type="button" disabled="">URL 추가</button>
     </p>
     <p class="font-description">라이선스상 <strong>임베딩</strong>과 <strong>웹사이트 내 이미지</strong> 부문의 사용이 허가된 폰트 파일을 사용할 수 있습니다.</p>
     <ol id="fonts">
@@ -136,7 +136,7 @@
   </ol>
 </form>
 <h2>설정 파일 출력</h2>
-<div class="output">
+<div class="output-section">
   <textarea id="output" cols="50" rows="20" readonly="" autocomplete="off">export const colors = {
   빨간색: [0xdd, 0x2e, 0x44], // #dd2e44
   주황색: [0xf4, 0x90, 0x0c], // #f4900c
