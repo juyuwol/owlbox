@@ -5,7 +5,7 @@
 <title>카드 설정 도우미</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
-<script type="module" src="color.js"></script>
+<script type="module" src="app.js"></script>
 <script type="module" src="canvaskit.js"></script>
 <script type="module" src="image.js"></script>
 <script type="module" src="generator.js"></script>
@@ -21,40 +21,116 @@
       <button id="remove" type="button" disabled="">삭제</button>
       <button id="reset" type="button" disabled="">리셋</button>
     </p>
-    <p>
+    <p class="field-add">
       <input id="file" type="file" multiple="">
-      <button id="upload" type="button" disabled="">추가</button><br>
+      <span class="spacing-after"></span>
+      <button id="upload" type="button" disabled="">파일 추가</button>
+    </p>
+    <p class="field-add">
+      <label class="spacing-after" for="url">URL:</label>
+      <input id="url" type="url">
+      <span class="spacing-after"></span>
+      <button id="load" type="button" disabled="">URL 추가</button>
     </p>
     <p class="font-description">라이선스상 <strong>임베딩</strong>과 <strong>웹사이트 내 이미지</strong> 부문의 사용이 허가된 폰트 파일을 사용할 수 있습니다.</p>
     <ol id="fonts">
       <li>
-        <label><input name="font" type="checkbox" value="NotoSansKR-Regular.woff2"> NotoSansKR-Regular.woff2</label>
-        <button data-dir="up" type="button" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
-        <button data-dir="down" type="button" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+        <label><input type="checkbox" name="font" value="NotoSansKR-Regular.woff2" disabled=""> NotoSansKR-Regular.woff2</label>
+        <button type="button" data-dir="up" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+        <button type="button" data-dir="down" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
       </li>
       <li>
-        <label><input name="font" type="checkbox" value="NotoColorEmoji.woff2"> NotoColorEmoji.woff2</label>
-        <button data-dir="up" type="button" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
-        <button data-dir="down" type="button" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+        <label><input type="checkbox" name="font" value="NotoColorEmoji.woff2" disabled=""> NotoColorEmoji.woff2</label>
+        <button type="button" data-dir="up" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+        <button type="button" data-dir="down" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
       </li>
     </ol>
   </fieldset>
   <div class="fields">
-    <p><label>배경 색상: <input name="backgroundColor" type="text" value="#ffffff"></label> <input type="color" value="#ffffff" data-name="backgroundColor"></p>
-    <p><label>테두리 색상: <input name="frameColor" type="text" value="#bbbbbb"></label> <input type="color" value="#bbbbbb" data-name="frameColor"></p>
-    <p><label>글자 색상: <input name="textColor" type="text" value="#000000"></label> <input type="color" value="#000000" data-name="textColor"></p>
-    <p><label>글자 크기: <input name="fontSize" type="number" min="1" value="28"> px</label></p>
-    <p><label>행간: <input name="lineHeight" type="number" min="100" value="160"> %</label></p>
-    <p><label>테두리 가로줄 두께: <input name="horizontalFrameThickness" type="number" min="0" value="42"> px</label></p>
-    <p><label>테두리 세로줄 두께: <input name="verticalFrameThickness" type="number" min="0" value="28"> px</label></p>
-    <p><label>테두리 X 좌표: <input name="frameLeft" type="number" min="0" value="0"> px</label></p>
-    <p><label>테두리 Y 좌표: <input name="frameTop" type="number" min="0" value="0"> px</label></p>
-    <p><label>글 상자 X 좌표: <input name="contentLeft" type="number" min="0" value="70"> px</label></p>
-    <p><label>글 상자 Y 좌표: <input name="minContentTop" type="number" min="0" value="84"> px</label></p>
+    <p>
+      <label>배경 색상: <input type="text" name="backgroundColor" value="#ffffff"></label>
+      <input type="color" value="#ffffff" data-name="backgroundColor" disabled="">
+    </p>
+    <p>
+      <label>테두리 색상: <input type="text" name="frameColor" value="#bbbbbb"></label>
+      <input type="color" value="#bbbbbb" data-name="frameColor" disabled="">
+    </p>
+    <p>
+      <label>글자 색상: <input type="text" name="textColor" value="#000000"></label>
+      <input type="color" value="#000000" data-name="textColor" disabled="">
+    </p>
+    <p><label>글자 크기: <input type="number" name="fontSize" value="28" min="1"> px</label></p>
+    <p><label>행간: <input type="number" name="lineHeight" value="160" min="100"> %</label></p>
+    <p><label>테두리 가로줄 두께: <input type="number" name="horizontalFrameThickness" value="42" min="0"> px</label></p>
+    <p><label>테두리 세로줄 두께: <input type="number" name="verticalFrameThickness" value="28" min="0"> px</label></p>
+    <p><label>테두리 X 좌표: <input type="number" name="frameLeft" value="0" min="0"> px</label></p>
+    <p><label>테두리 Y 좌표: <input type="number" name="frameTop" value="0" min="0"> px</label></p>
+    <p><label>글 상자 X 좌표: <input type="number" name="contentLeft" value="70" min="0"> px</label></p>
+    <p><label>글 상자 Y 좌표: <input type="number" name="minContentTop" value="84" min="0"> px</label></p>
     <p><label>미리보기 내용:<br>
     <textarea name="message" cols="40" rows="4">프리벳 가 4번지에 사는 더즐리 부부는 자신들이 정상적이라는 것을 아주 자랑스럽게 여기는 사람들이었다.</textarea></label></p>
-    <p><button name="submit" type="submit" disabled="">입력</button></p>
+    <p><button type="submit" disabled="">입력</button></p>
   </div>
+</form>
+<h2>테두리 팔레트</h2>
+<form id="palette" autocomplete="off">
+  <div>
+    <p>
+      <button id="color-remove" type="button" disabled="">삭제</button>
+      <button id="color-add" type="button" disabled="">추가</button>
+    </p>
+    <p><button type="submit" disabled="">입력</button></p>
+  </div>
+  <ol id="colors">
+    <li>
+      <input type="checkbox" name="checkbox" disabled="">
+      <input type="text" name="key" value="빨간색" required="">:
+      <input type="text" name="value" value="#dd2e44" required="">
+      <input type="color" value="#dd2e44" data-name="value" data-index="0" disabled="">
+      <button type="button" data-dir="up" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+      <button type="button" data-dir="down" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+    </li>
+    <li>
+      <input type="checkbox" name="checkbox" disabled="">
+      <input type="text" name="key" value="주황색" required="">:
+      <input type="text" name="value" value="#f4900c" required="">
+      <input type="color" value="#f4900c" data-name="value" data-index="1" disabled="">
+      <button type="button" data-dir="up" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+      <button type="button" data-dir="down" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+    </li>
+    <li>
+      <input type="checkbox" name="checkbox" disabled="">
+      <input type="text" name="key" value="노란색" required="">:
+      <input type="text" name="value" value="#fdcb58" required="">
+      <input type="color" value="#fdcb58" data-name="value" data-index="2" disabled="">
+      <button type="button" data-dir="up" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+      <button type="button" data-dir="down" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+    </li>
+    <li>
+      <input type="checkbox" name="checkbox" disabled="">
+      <input type="text" name="key" value="초록색" required="">:
+      <input type="text" name="value" value="#78b159" required="">
+      <input type="color" value="#78b159" data-name="value" data-index="3" disabled="">
+      <button type="button" data-dir="up" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+      <button type="button" data-dir="down" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+    </li>
+    <li>
+      <input type="checkbox" name="checkbox" disabled="">
+      <input type="text" name="key" value="파란색" required="">:
+      <input type="text" name="value" value="#5dadec" required="">
+      <input type="color" value="#5dadec" data-name="value" data-index="4" disabled="">
+      <button type="button" data-dir="up" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+      <button type="button" data-dir="down" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+    </li>
+    <li>
+      <input type="checkbox" name="checkbox" disabled="">
+      <input type="text" name="key" value="보라색" required="">:
+      <input type="text" name="value" value="#aa8ed6" required="">
+      <input type="color" value="#aa8ed6" data-name="value" data-index="5" disabled="">
+      <button type="button" data-dir="up" aria-label="위로" disabled=""><span aria-hidden="">↑</span></button>
+      <button type="button" data-dir="down" aria-label="아래로" disabled=""><span aria-hidden="">↓</span></button>
+    </li>
+  </ol>
 </form>
 <h2>설정 파일 출력</h2>
 <div class="output">
@@ -87,16 +163,27 @@ export const style = {
 };
 </textarea>
   <div>
-    <p>글 상자의 코드를 복사하거나 파일을 <a id="download" download="card.js">다운로드</a>하여, 사서함 소스 리포지토리의 <code>layouts/card.js</code> 모듈 파일을 덮어씌웁니다.</p>
+    <p>글 상자의 코드를 복사하거나 파일을 <a id="download" href="javascript:;" download="card.js">다운로드</a>하여, 사서함 소스 리포지토리의 <code>layouts/card.js</code> 모듈 파일을 덮어씌웁니다.</p>
     <p>사용한 폰트 파일은 모두 <code>fonts</code> 디렉토리에 업로드합니다.</p>
   </div>
 </div>
-<footer><small>© 2025 주유월 &lt;<a href="mailto:ju@yuwol.pe.kr">ju@yuwol.pe.kr</a>&gt;</small></footer>
+<hr>
+<footer>© 2025 주유월 &lt;<a href="mailto:ju@yuwol.pe.kr">ju@yuwol.pe.kr</a>&gt;</footer>
 <template id="font-item">
   <li>
-    <label><input name="font" type="checkbox"> </label>
-    <button data-dir="up" type="button" aria-label="위로"><span aria-hidden="">↑</span></button>
-    <button data-dir="down" type="button" aria-label="아래로"><span aria-hidden="">↓</span></button>
+    <label><input type="checkbox" name="font"> </label>
+    <button type="button" data-dir="up" aria-label="위로"><span aria-hidden="">↑</span></button>
+    <button type="button" data-dir="down" aria-label="아래로"><span aria-hidden="">↓</span></button>
+  </li>
+</template>
+<template id="color-item">
+  <li>
+    <input type="checkbox" name="checkbox">
+    <input type="text" name="key" required="">:
+    <input type="text" name="value" required="">
+    <input type="color">
+    <button type="button" data-dir="up" aria-label="위로"><span aria-hidden="">↑</span></button>
+    <button type="button" data-dir="down" aria-label="아래로"><span aria-hidden="">↓</span></button>
   </li>
 </template>
 </body>

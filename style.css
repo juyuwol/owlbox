@@ -1,21 +1,29 @@
 html {
   color-scheme: light dark;
   line-height: 1.5;
+  text-underline-position: under;
 }
 body {
   box-sizing: border-box;
+  margin-block: 0 44px;
   margin-inline: auto;
   padding-inline: 8px;
   max-width: 880px;
 }
-footer,
 fieldset {
   margin-block: 1.5em;
   margin-inline: 0;
 }
+footer {
+  font-size: smaller;
+  text-align: center;
+}
 ol,
 p {
   margin-block: 0.5em;
+}
+li {
+  margin-block: 0.25em;
 }
 h1,
 h2 {
@@ -30,25 +38,44 @@ textarea {
 br + textarea {
   margin-block-start: 0.25em;
 }
+p > button {
+  min-width: 44px;
+}
+button,
+input,
+textarea {
+  font-family: sans-serif;
+  line-height: inherit;
+  font-size: smaller;
+}
+button,
+[type=url],
 [type=text],
 [type=number] {
   padding: 0 0.25em;
-  width: 4em;
+}
+[type=text],
+[type=number] {
+  width: 5em;
 }
 [type=color] {
   box-sizing: content-box;
-  display: inline-block;
   vertical-align: middle;
   padding: 0;
   width: 44px;
   height: 1.5em;
 }
-code,
-textarea,
-input {
+code {
   font-family: monospace, monospace;
   line-height: inherit;
   font-size: smaller;
+}
+hr {
+  margin-block: 44px;
+}
+.spacing-after::after {
+  content: ' ';
+  white-space: pre;
 }
 .description {
   margin-block: 0 1.5em;
@@ -67,14 +94,27 @@ input {
   margin-block: 1em;
   word-break: keep-all;
 }
+.field-add {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.field-add > input {
+  flex-grow: 1;
+}
+.field-add > button {
+  min-width: 66px;
+}
 [name=message] {
   width: 100%;
   max-width: calc(2px + 32em);
 }
 [id=output] {
   display: block;
+  font-family: monospace, monospace;
   margin-block: 0 1.5em;
   width: calc(2px + 27em);
+  height: 75vh;
 }
 @media (min-width: 640px) {
   p:first-child {
