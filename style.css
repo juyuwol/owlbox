@@ -9,6 +9,7 @@ body {
   margin-inline: auto;
   padding-inline: 8px;
   max-width: 880px;
+  min-width: 400px;
 }
 fieldset {
   margin-block: 1.5em;
@@ -37,6 +38,9 @@ textarea {
 }
 br + textarea {
   margin-block-start: 0.25em;
+}
+button {
+  min-width: 24px;
 }
 p > button {
   min-width: 44px;
