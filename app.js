@@ -1,3 +1,6 @@
+const INDEX_COLORS = 0;
+const INDEX_CARD = 1;
+
 const NON_HANGEUL_ID = /[^$_가-힣]/;
 const NON_HEX = /[^0-9A-Fa-f]/;
 
@@ -9,8 +12,9 @@ const defaultFontNames = [
   'NotoColorEmoji.woff2',
 ];
 
+export { INDEX_CARD };
 export const generatorForm = document.getElementById('generator');
-export const generatorControls = generatorForm.elements;
+export const generatorElements = generatorForm.elements;
 export const fontMap = new Map();
 export const promise = Promise.all(defaultFontNames.map(async (name) => {
   const res = await fetch(name);
@@ -128,11 +132,11 @@ for (const checkbox of fontList.querySelectorAll('[name=font]')) {
 }
 
 {
-  const urlInput = document.getElementById('font-url');
+  const urlBox = document.getElementById('font-url');
   const loadButton = document.getElementById('font-load');
 
-  urlInput.oninput = () => {
-    if (urlInput.value.length === 0) {
+  urlBox.oninput = () => {
+    if (urlBox.value.length === 0) {
       loadButton.disabled = true;
     } else if (loadButton.disabled) {
       loadButton.disabled = false;
@@ -140,7 +144,7 @@ for (const checkbox of fontList.querySelectorAll('[name=font]')) {
   };
 
   loadButton.onclick = async () => {
-    const url = urlInput.value;
+    const url = urlBox.value;
     if (!url) return;
     let name = '';
     try {
@@ -166,12 +170,12 @@ for (const checkbox of fontList.querySelectorAll('[name=font]')) {
     } catch (e) {
       return window.alert('URL로부터 폰트를 가져오지 못했습니다.');
     }
-    urlInput.value = '';
+    urlBox.value = '';
   };
 }
 
 const paletteForm = document.getElementById('palette');
-const paletteControls = paletteForm.elements;
+const paletteElements = paletteForm.elements;
 
 {
   const itemTemplate = document.getElementById('color-item').content;
@@ -190,12 +194,12 @@ const paletteControls = paletteForm.elements;
   };
 
   removeButton.onclick = () => {
-    const elements = paletteForm.querySelectorAll('[name=checkbox]:checked');
+    const nodes = paletteForm.querySelectorAll('[name=checkbox]:checked');
     removeButton.disabled = true;
-    if (elements.length === colorList.childElementCount) {
+    if (nodes.length === colorList.childElementCount) {
       return colorList.replaceChildren();
     }
-    for (const checkbox of elements) {
+    for (const checkbox of nodes) {
       checkbox.closest('li').remove();
     }
   };
@@ -213,7 +217,7 @@ const paletteControls = paletteForm.elements;
 
   addButton.disabled = false;
 
-  for (const checkbox of paletteControls.checkbox) {
+  for (const checkbox of paletteElements.checkbox) {
     checkbox.onchange = toggleRemoveButton;
     checkbox.disabled = false;
   }
@@ -233,8 +237,8 @@ export const updateOutput = (() => {
   const outputBox = document.getElementById('output');
   const downloadLink = document.getElementById('download');
   const snippets = [
-    createColors(paletteControls),
-    createCard(defaultFontNames, getStyle(generatorControls)),
+    createColors(paletteElements),
+    createCard(defaultFontNames, getStyle(generatorElements)),
   ];
 
   let fileURL = '';
@@ -255,7 +259,7 @@ export const updateOutput = (() => {
 
 paletteForm.onsubmit = (event) => {
   event.preventDefault();
-  updateOutput(createColors(paletteControls), 0);
+  updateOutput(createColors(paletteElements), INDEX_COLORS);
 };
 
 paletteForm.querySelector('[type=submit]').disabled = false;
@@ -271,19 +275,19 @@ function createColor(key, value) {
   return `  ${id}: ${toRGBArray(value)}, // ${value}\n`;
 }
 
-function createColors(controls) {
+function createColors(elements) {
   let snippet = 'export const colors = {';
-  const item = controls.key;
+  const item = elements.key;
   if (item === undefined) {
   } else if (item instanceof RadioNodeList) {
-    const values = controls.value;
+    const values = elements.value;
     const end = item.length;
     snippet += '\n';
     for (let i = 0; i < end; ++i) {
       snippet += createColor(item[i].value, values[i].value);
     }
   } else {
-    snippet += '\n' + createColor(item.value, controls.value.value);
+    snippet += '\n' + createColor(item.value, elements.value.value);
   }
   return snippet + '};\n';
 }
@@ -333,12 +337,12 @@ function toRGBArray(hexColor) {
 }
 
 export function createCard(fontNames, style) {
-  const fonts = JSON.stringify(fontNames, undefined, 2).slice(0, -2) + ',\n]';
   const backgroundColor = toHexColor(style.backgroundColor);
   const frameColor = toHexColor(style.frameColor);
   const textColor = toHexColor(style.textColor);
   return `\
-export const fonts = ${fonts};
+export const fonts = ${JSON.stringify(fontNames, undefined, 2).slice(0, -2)},
+];
 
 export const style = {
   backgroundColor: ${toRGBArray(backgroundColor)}, // ${backgroundColor}
@@ -356,18 +360,18 @@ export const style = {
 `;
 }
 
-export function getStyle(controls) {
+export function getStyle(elements) {
   return {
-    backgroundColor: parseColor(controls.backgroundColor.value),
-    frameColor: parseColor(controls.frameColor.value),
-    textColor: parseColor(controls.textColor.value),
-    fontSize: controls.fontSize.valueAsNumber,
-    lineHeight: controls.lineHeight.valueAsNumber / 100,
-    horizontalFrameThickness: controls.horizontalFrameThickness.valueAsNumber,
-    verticalFrameThickness: controls.verticalFrameThickness.valueAsNumber,
-    frameLeft: controls.frameLeft.valueAsNumber,
-    frameTop: controls.frameTop.valueAsNumber,
-    contentLeft: controls.contentLeft.valueAsNumber,
-    minContentTop: controls.minContentTop.valueAsNumber,
+    backgroundColor: parseColor(elements.backgroundColor.value),
+    frameColor: parseColor(elements.frameColor.value),
+    textColor: parseColor(elements.textColor.value),
+    fontSize: elements.fontSize.valueAsNumber,
+    lineHeight: elements.lineHeight.valueAsNumber / 100,
+    horizontalFrameThickness: elements.horizontalFrameThickness.valueAsNumber,
+    verticalFrameThickness: elements.verticalFrameThickness.valueAsNumber,
+    frameLeft: elements.frameLeft.valueAsNumber,
+    frameTop: elements.frameTop.valueAsNumber,
+    contentLeft: elements.contentLeft.valueAsNumber,
+    minContentTop: elements.minContentTop.valueAsNumber,
   };
 }
