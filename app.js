@@ -1,17 +1,18 @@
 const NON_HANGEUL_ID = /[^$_가-힣]/;
 const NON_HEX = /[^0-9A-Fa-f]/;
 
-const defaultFonts = {};
 const fontList = document.getElementById('fonts');
 const resetButton = document.getElementById('font-reset');
+const defaultFonts = {};
+const defaultFontNames = [
+  'NotoSansKR-Regular.woff2',
+  'NotoColorEmoji.woff2',
+];
 
 export const generatorForm = document.getElementById('generator');
 export const generatorControls = generatorForm.elements;
 export const fontMap = new Map();
-export const promise = Promise.all([
-  'NotoSansKR-Regular.woff2',
-  'NotoColorEmoji.woff2',
-].map(async (name) => {
+export const promise = Promise.all(defaultFontNames.map(async (name) => {
   const res = await fetch(name);
   if (!res.ok) throw new Error();
   const buffer = defaultFonts[name] = await res.arrayBuffer();
@@ -77,7 +78,7 @@ for (const button of fontList.querySelectorAll('[data-dir=down]')) {
     resetButton.disabled = false;
     for (const checkbox of generatorForm.querySelectorAll('[name=font]:checked')) {
       fontMap.delete(checkbox.value);
-      findLIAncestor(checkbox).remove();
+      checkbox.closest('li').remove();
     }
   };
 
@@ -195,7 +196,7 @@ const paletteControls = paletteForm.elements;
       return colorList.replaceChildren();
     }
     for (const checkbox of elements) {
-      findLIAncestor(checkbox).remove();
+      checkbox.closest('li').remove();
     }
   };
 
@@ -233,7 +234,7 @@ export const updateOutput = (() => {
   const downloadLink = document.getElementById('download');
   const snippets = [
     createColors(paletteControls),
-    createCard(Object.keys(defaultFonts), getStyle(generatorControls)),
+    createCard(defaultFontNames, getStyle(generatorControls)),
   ];
 
   let fileURL = '';
@@ -287,15 +288,8 @@ function createColors(controls) {
   return snippet + '};\n';
 }
 
-function findLIAncestor(element) {
-  do {
-    element = element.parentElement;
-  } while (element.tagName !== 'LI');
-  return element;
-}
-
 function moveItem(button, direction, action) {
-  const item = findLIAncestor(button);
+  const item = button.closest('li');
   const sibling = item[`${direction}ElementSibling`];
   if (sibling === null) return false;
   sibling[action](item);
