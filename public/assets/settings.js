@@ -4,8 +4,8 @@
 import { handleError } from './error.js';
 
 const form = document.getElementById('settings');
-const button = form.querySelector('[type=submit]');
-const schema = JSON.parse(form.dataset.schema);
+const submitButton = form.querySelector('[type=submit]');
+const schema = JSON.parse(form.getAttribute('data-schema'));
 const initializers = {
   boolean: (value) => (value === 'on'),
   number: (value) => (value ? +value : null),
@@ -14,26 +14,21 @@ const initializers = {
 form.onsubmit = async function submit(event) {
   event.preventDefault();
   form.onsubmit = (event) => event.preventDefault();
-  button.disabled = true;
+  submitButton.disabled = true;
+  const formData = new FormData(form);
+  const keys = new Set();
+  const dups = new Set();
   const data = {};
-  for (const [ key, curr ] of new FormData(form).entries()) {
-    if (!data.hasOwnProperty(key)) {
-      data[key] = curr;
-      continue;
-    }
-    const prev = data[key];
-    if (Array.isArray(prev)) {
-      prev.push(curr);
+  for (const key of formData.keys()) (keys.has(key) ? dups : keys).add(key);
+  for (const key of keys) {
+    const uninited = schema.hasOwnProperty(key);
+    if (dups.has(key)) {
+      const value = formData.getAll(key);
+      data[key] = uninited ? value.map(initializers[schema[key]]) : value;
     } else {
-      data[key] = [prev, curr];
+      const value = formData.get(key);
+      data[key] = uninited ? initializers[schema[key]](value) : value;
     }
-  }
-  for (const key in schema) {
-    const hasProperty = data.hasOwnProperty(key);
-    const value = hasProperty ? data[key] : null;
-    const isArray = hasProperty && Array.isArray(value);
-    const initialize = initializers[schema[key]];
-    data[key] = isArray ? value.map(initialize) : initialize(value);
   }
   try {
     await fetch(form.action, {
@@ -42,13 +37,13 @@ form.onsubmit = async function submit(event) {
       body: JSON.stringify(data),
       credentials: 'include',
     }).then(handleError);
-    window.alert(form.dataset.ok);
+    window.alert(form.getAttribute('data-ok'));
   } catch (error) {
     window.alert(error.message);
   } finally {
     form.onsubmit = submit;
-    button.disabled = false;
+    submitButton.disabled = false;
   }
 };
 
-button.disabled = false;
+submitButton.disabled = false;

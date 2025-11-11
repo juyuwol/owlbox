@@ -7,12 +7,12 @@ export async function handleError(res) {
   if (res.headers.get('content-type') === 'application/problem+json') {
     const { title, detail } = await res.json();
     message += ` ${title}`;
-    if (detail !== undefined) message += `: ${detail}`;
+    if (detail) message += `: ${detail}`;
   } else {
     const { statusText } = res;
     const body = await res.text();
-    if (statusText !== '') message += ` ${statusText}`;
-    if (body !== '') message += `: ${body}`;
+    if (statusText) message += ` ${statusText}`;
+    if (body) message += `: ${body}`;
   }
   throw new Error(message);
 }

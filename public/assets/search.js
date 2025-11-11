@@ -8,7 +8,7 @@ let total = 0, perPage = 1, lastPage = 1;
 let matched = null, keys = null;
 let postDir = '';
 
-let previousElementSibling = null;
+let referenceElement = null;
 const { classList } = document.documentElement;
 const hasQuery = (query !== '');
 const loading = fetch('index.json').then((res) => {
@@ -44,8 +44,9 @@ customElements.define('search-content', class extends HTMLElement {
       emit('search-search', { params, query });
     };
 
-    ({ dataset: { perPage, postDir }, previousElementSibling } = this);
-    perPage = +perPage;
+    referenceElement = this.previousElementSibling;
+    perPage = +this.getAttribute('data-per-page');
+    postDir = this.getAttribute('data-post-dir');
     this.remove();
 
     if (!hasQuery) return;
@@ -104,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => loading.then((data) => {
   });
 
   definePager(result);
-  previousElementSibling.after(result);
+  referenceElement.after(result);
 
   if (!hasQuery) return;
   emit('search-search', { params: new URLSearchParams(location.search) });

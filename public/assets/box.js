@@ -34,8 +34,8 @@ const totalText = content.getElementById('box-total').lastChild;
 const list = content.getElementById('box-list');
 const loadingLine = document.getElementById('box-loading');
 const tabList = document.getElementById('tab');
-const tabRadios = tabList.elements.tab;
-const tabRadiosAvailable = [...tabRadios].filter(e => !e.disabled);
+const tabNodes = tabList.elements.tab;
+const tabNodesAvailable = [...tabNodes].filter(e => !e.disabled);
 
 const createBlock = {
   unreplied: createUnrepliedCreator(createPublishedCreator()),
@@ -73,18 +73,18 @@ document.addEventListener('box-render', () => {
 definePager();
 defineCheckbox();
 
-if (tabRadios.value === '') {
-  tabRadiosAvailable[0].checked = true;
+if (tabNodes.value === '') {
+  tabNodesAvailable[0].checked = true;
 }
 
 (refreshButton.onclick = tabList.onchange = async () => {
-  for (const radio of tabRadiosAvailable) {
+  for (const radio of tabNodesAvailable) {
     radio.disabled = true;
   }
   contentBlock.remove();
   tabList.after(loadingLine);
   posts = new Map();
-  tab = tabRadios.value;
+  tab = tabNodes.value;
   selectedIds.clear();
   initializeDeleteButton();
   try {
@@ -97,7 +97,7 @@ if (tabRadios.value === '') {
       post.replied = normalizeDateTime(replied);
     }
   } catch (error) {
-    for (const radio of tabRadios) {
+    for (const radio of tabNodes) {
       radio.checked = false;
     }
     loadingLine.remove();
@@ -105,7 +105,7 @@ if (tabRadios.value === '') {
   }
   initializePage();
   loadingLine.replaceWith(contentBlock);
-  for (const radio of tabRadiosAvailable) {
+  for (const radio of tabNodesAvailable) {
     radio.disabled = false;
   }
 })();
