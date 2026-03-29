@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import { respondError, updateJSON } from '../src/vercel.js';
 
 const EMAIL = /[^@]@[^@]/; // Loose check

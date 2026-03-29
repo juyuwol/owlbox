@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 const WIDTH      = 900; // Max side value of Twitter card
 const MIN_HEIGHT = 472; // 52.356% (Twitter card's ratio) of 900px
 

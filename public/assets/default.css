@@ -1,3 +1,7 @@
+/*
+Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+SPDX-License-Identifier: 0BSD
+*/
 html {
   --line-height: 1.5;
   --lh: calc(var(--line-height) * 1em);

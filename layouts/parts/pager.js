@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: 0BSD
+
 import { prettify } from '../util.js';
 
 export default ({ number, totalPages, first, prev, next, last }) => {

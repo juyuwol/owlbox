@@ -1,3 +1,8 @@
+<!--
+Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # 설치 안내
 
 ## 프로젝트 생성

@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import { KV_KEY, kv, respondError } from '../src/vercel.js';
 
 const fromObject = (a, b) => a + `,"${b.id}",${JSON.stringify(JSON.stringify(b))}`;

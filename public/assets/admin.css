@@ -1,3 +1,7 @@
+/*
+Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+SPDX-License-Identifier: 0BSD
+*/
 @keyframes dot1 {
    0% { opacity: 0; }
   25% { opacity: 1; }

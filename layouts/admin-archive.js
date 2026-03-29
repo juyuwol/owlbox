@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: 0BSD
+
 import render from './admin.js';
 import { prettify } from './util.js';
 

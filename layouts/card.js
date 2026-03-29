@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: 0BSD
+
 export const colors = {
   빨간색: [0xdd, 0x2e, 0x44], // #dd2e44
   주황색: [0xf4, 0x90, 0x0c], // #f4900c

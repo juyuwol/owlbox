@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import adminArchive from './admin-archive.js';
 import adminBox from './admin-box.js';
 import adminSettings from './admin-settings.js';

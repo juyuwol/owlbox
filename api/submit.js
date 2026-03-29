@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import { ipAddress, waitUntil } from '@vercel/functions';
 import { renderEmail, renderError } from '../layouts/submit.js';
 import { KV_KEY, http, json, kv, local } from '../src/vercel.js';
@@ -69,7 +72,9 @@ export const POST = deactivated ? (() => respondError(404)) : async (req) => {
     const message = post.message = value.trimEnd().replaceAll('\r\n', '\n');
     if ((message === '') || (message.length > maxLength)) throw new Error();
     const color = form.get('color');
+    const spoiler = form.get('spoiler');
     if (color) post.color = color;
+    if (spoiler) post.spoiler = true;
   } catch (e) {
     return respondError(400);
   }

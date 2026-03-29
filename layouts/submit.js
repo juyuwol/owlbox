@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: 0BSD
+
 import site from '../config.js';
 import render from './status.js';
 import { DO_NOT_SEND, escapeHTML as h, formatDateTime } from './util.js';

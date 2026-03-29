@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: 0BSD
+
 import includePostContent from './parts/post-content.js';
 import render from './base.js';
 import { escapeHTML as h, pretty } from './util.js';

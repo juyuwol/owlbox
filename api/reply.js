@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import { readFile } from 'node:fs/promises';
 import CanvasKitInit from 'canvaskit-wasm';
 import { colors, fonts, style } from '../layouts/card.js';

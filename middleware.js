@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import { next, rewrite } from '@vercel/functions/middleware';
 
 const { USERNAME, PASSWORD } = process.env;

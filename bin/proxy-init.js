@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import { readFile, writeFile } from 'node:fs/promises';
 import { relative } from 'node:path';
 import { parseArgs } from 'node:util';

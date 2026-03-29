@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: 0BSD
+
 import includePager from './parts/pager.js';
 import includePostItem from './parts/post-item.js';
 import includeSearchForm from './parts/search-form.js';

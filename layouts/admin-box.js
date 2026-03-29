@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import render from './admin.js';
 import { colors } from './card.js';
 import { prettify } from './util.js';

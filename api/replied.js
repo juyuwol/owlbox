@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import { configGitHub, http, json, local, respondError, updateJSON } from '../src/vercel.js';
 import site from '../config.js';
 

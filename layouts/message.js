@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: 0BSD
+
 import { colors } from './card.js';
 
 export default () => Object.keys(colors).reduce((code, name) => {
