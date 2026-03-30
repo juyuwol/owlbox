@@ -74,7 +74,7 @@ SPDX-License-Identifier: CC0-1.0
    - 동작이 좀 더 안정적이고 빠름
    - Google이 아님
 
-[Resend Free Plan](https://resend.com/pricing), [Google 일반 사용자의 서비스 할당량](https://developers.google.com/apps-script/guides/services/quotas) 모두 하루 100건까지의 이메일 발송을 허용하고 있습니다. (2025년 7월 15일 기준)
+[Resend Free Plan](https://resend.com/pricing), [Google 일반 사용자의 서비스 할당량](https://developers.google.com/apps-script/guides/services/quotas) 모두 하루 100건까지의 이메일 발송을 허용하고 있습니다. (2026년 3월 30일 기준)
 
 ### Google Apps Script 연동
 
@@ -98,7 +98,7 @@ SPDX-License-Identifier: CC0-1.0
      MailApp.sendEmail(JSON.parse(e.postData.contents));
 
      // https://developers.google.com/apps-script/reference/content
-     return ContentService.createTextOutput('{"ok":true}\n').setMimeType(ContentService.MimeType.JSON);
+     return ContentService.createTextOutput('{"ok":true}').setMimeType(ContentService.MimeType.JSON);
    }
    ```
 

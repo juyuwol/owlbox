@@ -11,11 +11,7 @@ interface Page {
 
   /**
    * Page type (for template usage)
-   *
-   * @example
-   * ```
-   * (page, site) => (page.type === 'page') ? 'page' : 'non-page';
-   * ```
+   * @example (page) => (page.type === 'page') ? 'page' : 'non-page'
    */
   type: 'page';
   
@@ -40,13 +36,13 @@ interface Post {
   /** Message content as plaintext */
   message: string;
 
-  /** When the message was sent (format: RFC 3339 'date-time' or 'full-date') */
+  /** When the message was sent (format: RFC 3339 date-time or full-date) */
   sent: string;
 
   /** Reply content as plaintext */
   reply: string;
 
-  /** When the reply was last updated (format: RFC 3339 'date-time') */
+  /** When the reply was last updated (format: RFC 3339 date-time) */
   replied: string;
 
   /** URL path of the card image (pattern: /images/:id.png) */
@@ -137,10 +133,10 @@ interface Site {
 
   /** Generator metadata from package.json */
   generator: {
-    /** From `name` field */
+    /** From `name` field. */
     name: string;
 
-    /** From `displayName` field */
+    /** From `displayName` field. */
     displayName: string;
 
     /**
@@ -150,7 +146,7 @@ interface Site {
      */
     version: string;
 
-    /** From `repository` field. GitHub repository URL. */
+    /** From `repository` field. */
     repository: string;
   };
 
