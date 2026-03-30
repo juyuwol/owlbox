@@ -5,29 +5,24 @@ import { handleError } from './error.js';
 
 const form = document.getElementById('settings');
 const submitButton = form.querySelector('[type=submit]');
-const schema = JSON.parse(form.getAttribute('data-schema'));
-const initializers = {
-  boolean: (value) => (value === 'on'),
-  number: (value) => (value ? +value : null),
-};
 
 form.onsubmit = async function submit(event) {
   event.preventDefault();
   form.onsubmit = (event) => event.preventDefault();
   submitButton.disabled = true;
-  const formData = new FormData(form);
-  const keys = new Set();
-  const dups = new Set();
+  const { elements } = form;
   const data = {};
-  for (const key of formData.keys()) (keys.has(key) ? dups : keys).add(key);
-  for (const key of keys) {
-    const uninited = schema.hasOwnProperty(key);
-    if (dups.has(key)) {
-      const value = formData.getAll(key);
-      data[key] = uninited ? value.map(initializers[schema[key]]) : value;
+  for (let i = elements.length - 1; i >= 0; --i) {
+    const element = elements[i];
+    if (element.disabled) continue;
+    const { name } = element;
+    const schema = element.getAttribute('data-type');
+    if (schema === 'boolean') {
+      data[name] = element.checked;
+    } else if (schema === 'number') {
+      data[name] = element.valueAsNumber;
     } else {
-      const value = formData.get(key);
-      data[key] = uninited ? initializers[schema[key]](value) : value;
+      data[name] = element.value;
     }
   }
   try {

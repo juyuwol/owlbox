@@ -52,7 +52,8 @@ export async function POST(req) {
     }
     for (const key in body) {
       const value = body[key];
-      updates[key] = validators.get(key)?.(value) ?? value;
+      const validator = validators.get(key);
+      updates[key] = validator ? validator(value) : value;
     }
   } catch (error) {
     return respondError(400, error.message);
