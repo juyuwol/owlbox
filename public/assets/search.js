@@ -2,30 +2,41 @@
 // SPDX-License-Identifier: Zlib
 
 'use strict';
-((replaceChildren) => {
+(() => {
 
+if (!Element.prototype.replaceChildren) {
+  Element.prototype.replaceChildren = function () {
+    while (this.hasChildNodes()) this.lastChild.remove();
+    this.append(...arguments);
+  };
+}
+
+const { classList } = document.documentElement;
 const { origin, pathname } = location;
 const pages = new Map();
-let query = normalizeQuery(new URLSearchParams(location.search));
-let total = 0, perPage = 1, lastPage = 1;
-let matched = null, keys = null;
-let postDir = '';
-
-let referenceElement = null;
-const { classList } = document.documentElement;
-const hasQuery = (query !== '');
 const loading = fetch('index.json').then((res) => {
   if (!res.ok) throw new Error();
   return res.json();
 });
 
-classList.add('search-enabled');
-if (hasQuery) classList.add('search-loading', 'search-searching');
+let query = normalizeQuery(new URLSearchParams(location.search));
+let matched = null, keys = null;
+let total = 0, lastPage = 1;
 
-customElements.define('search-content', class extends HTMLElement {
+const hasInitQuery = (query !== '');
+if (hasInitQuery) {
+  classList.add('search-rendering', 'search-loading');
+}
+
+customElements.define('search-init', class extends HTMLElement {
   connectedCallback() {
+    const perPage = +this.getAttribute('data-per-page');
+    const postDir = this.getAttribute('data-post-dir');
+
     const form = document.getElementById('search');
     const box = form.elements.q;
+    const container = document.createElement('div');
+    container.hidden = true;
 
     form.onsubmit = (event) => {
       const form = event.currentTarget;
@@ -46,79 +57,83 @@ customElements.define('search-content', class extends HTMLElement {
       const query = box.value = normalizeQuery(params);
       emit('search-search', { params, query });
     };
+    
+    if (hasInitQuery) {
+      box.value = query;
+      classList.remove('search-rendering');
+    }
 
-    referenceElement = this.previousElementSibling;
-    perPage = +this.getAttribute('data-per-page');
-    postDir = this.getAttribute('data-post-dir');
-    this.remove();
+    this.replaceWith(container);
 
-    if (!hasQuery) return;
-    box.value = query;
-    classList.remove('search-loading');
+    document.addEventListener('DOMContentLoaded', () => loading.then((posts) => {
+      for (const post of posts) {
+        let { message, reply } = post;
+        if (post.spoiler) {
+          message = message.replaceAll('`', '');
+          reply = reply.replaceAll('`', '');
+        }
+        post.m = message.toLowerCase();
+        post.r = reply.toLowerCase();
+      }
+
+      const { content } = document.getElementById('search-result');
+      const totalText = content.getElementById('search-total').lastChild;
+      const list = content.getElementById('search-list');
+      const item = list.firstElementChild;
+
+      item.remove();
+      container.append(content);
+
+      const createItem = createItemCreator(item, postDir);
+
+      document.addEventListener('search-render', (event) => {
+        const { inited, currPage } = event.detail;
+        let items = pages.get(currPage);
+        if (items === undefined) {
+          const index = (currPage - 1) * perPage;
+          items = matched.slice(index, index + perPage).map(createItem, keys);
+          pages.set(currPage, items);
+        }
+        list.replaceChildren(...items);
+        if (inited) return;
+        totalText.data = `${total}`;
+        list.hidden = (total === 0);
+        container.hidden = false;
+      });
+
+      document.addEventListener('search-search', (event) => {
+        const { params, query: q = normalizeQuery(params) } = event.detail;
+        const inited = (keys !== null) && (q === query);
+        if (!inited) {
+          pages.clear();
+          query = q;
+          keys = parseKeys(q);
+          if (keys === null) return void (container.hidden = true);
+          matched = posts.filter(({ m, r }) => keys.every(e => m.includes(e) || r.includes(e)));
+          total = matched.length;
+          lastPage = (total > perPage) ? Math.ceil(total / perPage) : 1;
+        }
+        const page = parsePage(params, lastPage);
+        emit('search-render', {
+          inited,
+          baseURL: `?${new URLSearchParams({ q })}&p=`,
+          prevPage: Math.max(page - 1, 1),
+          currPage: page,
+          nextPage: Math.min(page + 1, lastPage),
+        });
+      });
+
+      definePager(container);
+
+      if (hasInitQuery) {
+        emit('search-search', { params: new URLSearchParams(location.search) });
+        classList.remove('search-loading');
+      }
+    }).catch(() => container.replaceWith(...this.childNodes)));
   }
 });
 
-document.addEventListener('DOMContentLoaded', () => loading.then((data) => {
-  for (const post of data) {
-    post.m = post.message.toLowerCase();
-    post.r = post.reply.toLowerCase();
-  }
-
-  const { content } = document.getElementById('search-result');
-  const totalText = content.getElementById('search-total').lastChild;
-  const list = content.getElementById('search-list');
-  const result = content.firstElementChild;
-  const createItem = createItemCreator();
-
-  document.addEventListener('search-render', (event) => {
-    const { init, currPage } = event.detail;
-    let items = pages.get(currPage);
-    if (items === undefined) {
-      const index = (currPage - 1) * perPage;
-      items = matched.slice(index, index + perPage).map(createItem(keys));
-      pages.set(currPage, items);
-    }
-    replaceChildren(list, items);
-    if (init) return;
-    totalText.data = `${total}`;
-    list.hidden = (total === 0);
-    result.hidden = false;
-  });
-
-  document.addEventListener('search-search', (event) => {
-    const { params, query: q = normalizeQuery(params) } = event.detail;
-    const init = (keys !== null) && (q === query);
-    if (!init) {
-      pages.clear();
-      query = q;
-      keys = parseKeys(q);
-      if (keys === null) return void (result.hidden = true);
-      matched = data.filter(({ m, r }) => keys.every(e => m.includes(e) || r.includes(e)));
-      total = matched.length;
-      lastPage = (total > perPage) ? Math.ceil(total / perPage) : 1;
-    }
-    const page = parsePage(params, lastPage);
-    emit('search-render', {
-      init,
-      baseURL: `?${new URLSearchParams({ q })}&p=`,
-      prevPage: Math.max(page - 1, 1),
-      currPage: page,
-      nextPage: Math.min(page + 1, lastPage),
-    });
-  });
-
-  definePager(result);
-  referenceElement.after(result);
-
-  if (!hasQuery) return;
-  emit('search-search', { params: new URLSearchParams(location.search) });
-  classList.remove('search-searching');
-}).catch(() => {
-  classList.remove('search-enabled', 'search-loading', 'search-searching');
-}));
-
-function createItemCreator() {
-  const template = document.getElementById('search-item').content.firstElementChild;
+function createItemCreator(template, postDir) {
   const link = template.querySelector('.post-link');
   const titleText = template.querySelector('.post-title').lastChild;
   const senderText = template.querySelector('.post-label').lastChild;
@@ -126,34 +141,39 @@ function createItemCreator() {
   const sentText = sentTime.lastChild;
   const repliedTime = template.querySelector('.post-replied');
   const repliedText = repliedTime.lastChild;
-  return (keys) => (post) => {
+  const messageContainer = template.querySelector('.post-message');
+  const replyContainer = template.querySelector('.post-reply');
+  return function (post) {
     const { sent, replied, color = '익명의' } = post;
     const sender = senderText.data = `${color} 쪽지`;
     const text = sentText.data = formatDatetime(sent);
+    const highlighter = post.spoiler ? highlightSpoiler : highlight;
     repliedText.data = formatDatetime(replied);
     titleText.data = formatTitle(sent, text, sender);
     link.setAttribute('href', `/${postDir}/${post.id}.html`);
     sentTime.setAttribute('datetime', sent);
     repliedTime.setAttribute('datetime', replied);
+    highlighter(this, messageContainer, post.message, post.m);
+    highlighter(this, replyContainer, post.reply, post.r);
     const item = template.cloneNode(true);
-    highlight(keys, item.querySelector('.post-message'), post.message, post.m);
-    highlight(keys, item.querySelector('.post-reply'), post.reply, post.r);
+    messageContainer.replaceChildren();
+    replyContainer.replaceChildren();
     return item;
   };
 }
 
-function definePager(result) {
+function definePager(container) {
   function intercept(event) {
     const link = event.currentTarget;
     if ((link.origin !== origin) || (link.pathname !== pathname)) return;
     event.preventDefault();
     history.pushState(null, '', link.href);
     emit('search-search', { params: new URLSearchParams(link.search) });
-    result.setAttribute('tabindex', '-1');
-    result.focus({ preventScroll: true });
-    result.blur();
-    result.removeAttribute('tabindex');
-    const y = result.getBoundingClientRect().y - 8;
+    container.setAttribute('tabindex', '-1');
+    container.focus({ preventScroll: true });
+    container.blur();
+    container.removeAttribute('tabindex');
+    const y = container.getBoundingClientRect().y - 8;
     if (y < 0) window.scrollBy(0, y);
   }
 
@@ -163,27 +183,27 @@ function definePager(result) {
       super();
       this.append(pager.cloneNode(true));
 
-      const firstLink = this.querySelector('.pager-first > a');
+      const currText  = this.querySelector('.current').lastChild;
+      const firstLink = this.querySelector('.first');
+      const prevLink  = this.querySelector('.prev');
+      const nextLink  = this.querySelector('.next');
+      const lastLink  = this.querySelector('.last');
       const firstItem = firstLink.parentNode;
-      const prevLink = this.querySelector('.pager-prev > a');
-      const prevItem = prevLink.parentNode;
-      const nextLink = this.querySelector('.pager-next > a');
-      const nextItem = nextLink.parentNode;
-      const lastLink = this.querySelector('.pager-last > a');
-      const lastItem = lastLink.parentNode;
-      const currText = this.querySelector('.pager-curr').lastChild;
+      const prevItem  = prevLink.parentNode;
+      const nextItem  = nextLink.parentNode;
+      const lastItem  = lastLink.parentNode;
 
       lastLink.onclick = nextLink.onclick = prevLink.onclick = firstLink.onclick = intercept;
 
       document.addEventListener('search-render', (event) => {
         if (this.hidden = (total === 0)) return;
-        const { init, baseURL, prevPage, currPage, nextPage } = event.detail;
+        const { inited, baseURL, prevPage, currPage, nextPage } = event.detail;
         prevItem.hidden = firstItem.hidden = (currPage === 1);
         lastItem.hidden = nextItem.hidden = (currPage === lastPage);
         currText.data = `${currPage}`;
         prevLink.setAttribute('href', baseURL + prevPage);
         nextLink.setAttribute('href', baseURL + nextPage);
-        if (init) return;
+        if (inited) return;
         firstLink.setAttribute('href', baseURL + '1');
         lastLink.setAttribute('href', baseURL + lastPage);
       });
@@ -206,16 +226,15 @@ function formatTitle(datetime, text, sender) {
   return `${(datetime.length > 10) ? text.slice(0, -3) : text} ${sender}`;
 }
 
-function highlight(keys, parent, str, strLowered) {
+function highlight(keys, node, str, strLowered, start = 0, end = str.length) {
+  const keySet = new Set(keys);
   const indexes = new Map();
-  const end = str.length;
-  keys = new Set(keys);
-  for (let i = 0, k = 0, n = -1; i < end; n = -1) {
-    for (const key of keys) {
+  for (let i = start, k = 0, n = -1; i < end; n = -1) {
+    for (const key of keySet) {
       const cache = indexes.get(key);
       const index = (cache >= i) ? cache : strLowered.indexOf(key, i);
       if (index === -1) {
-        keys.delete(key);
+        keySet.delete(key);
         continue;
       } else if ((n === -1) || (n > index)) {
         n = index;
@@ -223,20 +242,40 @@ function highlight(keys, parent, str, strLowered) {
       }
       indexes.set(key, index);
     }
-    if (n === -1) {
-      if (i < end) parent.append(str.slice(i));
+    if ((n === -1) || (n > end)) {
+      if (i < end) node.append(str.slice(i, end));
       break;
     }
-    if (i < n) parent.append(str.slice(i, n));
+    if ((i < n) && (n <= end)) {
+      node.append(str.slice(i, n));
+    }
+    i = n + k;
+    if (i >= end) break;
     const mark = document.createElement('mark');
-    mark.append(str.slice(n, i = n + k));
-    parent.append(mark);
+    mark.append(str.slice(n, i));
+    node.append(mark);
+  }
+}
+
+function highlightSpoiler(keys, node, str, strLowered) {
+  const arr = str.split('`');
+  let end = arr[0].length;
+  str = arr.join('');
+  highlight(keys, node, str, strLowered, 0, end);
+  for (let i = 1; i < arr.length; ++i) {
+    const mark = document.createElement('mark');
+    const spoiler = arr[i];
+    const start = end += spoiler.length;
+    end += arr[++i].length;
+    mark.setAttribute('data-spoiler', spoiler);
+    node.append(mark)
+    highlight(keys, node, str, strLowered, start, end);
   }
 }
 
 function normalizeQuery(params) {
   const query = params.get('q');
-  return (query === null) ? '' : query.trim();
+  return query ? query.trim() : '';
 }
 
 function compare(a, b) {
@@ -271,10 +310,4 @@ function parsePage(params, size) {
   return Math.min(Math.trunc(number), size);
 }
 
-})(('replaceChildren' in document) ?
-  (parent, children) => parent.replaceChildren(...children) :
-  (parent, children) => {
-    while (parent.hasChildNodes()) parent.removeChild(parent.lastChild);
-    parent.append(...children);
-  }
-);
+})();

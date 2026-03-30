@@ -3,12 +3,15 @@
 
 import includePostContent from './parts/post-content.js';
 import render from './base.js';
-import { escapeHTML as h, pretty } from './util.js';
+import { escapeHTML as h, prettify, pretty } from './util.js';
+
+const concatSpoiler = (a, b, i) => a + ((i % 2) ? '(스포일러)' : b);
 
 const scriptsModule = ['/assets/post.js'];
 
 export default (page, site) => {
-  const { reply } = page;
+  const { censoredReply } = page;
+  const reply = censoredReply?.reduce(concatSpoiler) ?? page.reply;
   const query = new URLSearchParams({ text: `${reply} ${page.permalink}` });
   page.canonical = true;
   page.scriptsModule = scriptsModule;
@@ -16,9 +19,12 @@ export default (page, site) => {
 <article>
   <div class="post-header">
     <h1 class="post-title">${h(page.title)}</h1>
-    <p class="post-setting"><label class="label-checkbox">\
-<input id="image-toggle" type="checkbox" autocomplete="off" disabled=""> \
-이미지 보기</label></p>
+    <form id="post-setting" class="post-setting">보기:${prettify(censoredReply ? `
+      <label><input type="radio" name="view" value="censored" checked=""> 검열문</label>
+      <label><input type="radio" name="view" value="origin"> 원문</label>` : `
+      <label><input type="radio" name="view" value="origin" checked=""> 원문</label>`)}
+      <label><input type="radio" name="view" value="image"> 이미지</label>
+    </form>
   </div>
   ${includePostContent(page, site, 2).render(2)}
 </article>

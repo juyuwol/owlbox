@@ -1,28 +1,37 @@
 // Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: Zlib
 
-import { configGitHub, http, json, local, respondError, updateJSON } from '../src/vercel.js';
+import { ID_CHARS, configGitHub, http, json, local, respondError, updateJSON } from '../src/vercel.js';
 import site from '../config.js';
 
 const { suffix, timeOffset } = site;
 
-function assign(data, updates) {
-  const { sent } = Object.assign(data, updates);
-  if (!sent.endsWith(timeOffset)) data.sent = local(Date.parse(sent));
-  return data;
+const isInvalidId = (id) => !ID_CHARS.test(id);
+const concatTreeEntries = (entries, id) => `${entries
+},{"mode":"100644","type":"blob","sha":null,"path":"data/unproxied/${id
+}.json"},{"mode":"100644","type":"blob","sha":null,"path":"public/images${suffix
+}/${id}.png"}`;
+
+function updatePost(post, updates) {
+  const { sent, spoiler = false } = Object.assign(post, updates);
+  if (!sent.endsWith(timeOffset)) post.sent = local(Date.parse(sent));
+  if (spoiler && !post.message.includes('`') && !post.reply.includes('`')) {
+    delete post.spoiler;
+  }
+  return post;
 }
 
 export async function DELETE(req) {
   const ids = new URL(req.url).searchParams.getAll('id');
-  if (ids.length === 0) {
-    return respondError(400, "At least one 'id' parameter is required.");
+  try {
+    if (ids.length === 0) {
+      throw new Error('At least one "id" parameter is required.');
+    } else if (ids.some(isInvalidId)) {
+      throw new Error('One or more "id" values are invalid.');
+    }
+  } catch (error) {
+    return respondError(400, error.message);
   }
-
-  const files = [];
-  for (const id of res) files.push(
-    { mode: '100644', type: 'blob', sha: null, path: `data/unproxied/${id}.json` },
-    { mode: '100644', type: 'blob', sha: null, path: `public/images${suffix}/${id}.png` },
-  );
 
   const { baseURL, headers, branch } = configGitHub();
   const ref = encodeURIComponent(branch);
@@ -42,26 +51,25 @@ export async function DELETE(req) {
     const { sha: tree } = await json(`${baseURL}/git/trees`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        base_tree: baseTree,
-        tree: files,
-      }),
+      body: `{"base_tree":"${baseTree // No need to escape sha
+      }","tree":[${ids.reduce(concatTreeEntries, '').slice(1)}]}`,
     }, 'Failed to create a tree.');
 
     // Create a commit that uses the tree created above
     // https://docs.github.com/en/rest/git/commits?apiVersion=2022-11-28#create-a-commit
     const { sha } = await json(`${baseURL}/git/commits`, {
       method: 'POST',
-      headers, // No need to escape sha and id
-      body: `{"message":"Delete ${ids.join(', ')}","parents":["${commit}"],"tree":"${tree}"}`,
+      headers,
+      body: `{"message":"Delete ${ids.join(', ') // No need to escape id and sha
+      }"},"parents":["${commit}"],"tree":"${tree}"}`,
     }, 'Failed to create a commit.');
 
     // Make the current branch point to the created commit
     // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
     await http(`${baseURL}/git/refs/heads/${ref}`, {
       method: 'PATCH',
-      headers, // No need to escape sha
-      body: `{"sha":"${sha}"}`,
+      headers,
+      body: `{"sha":"${sha}"}`, // No need to escape sha
     }, 'Failed to update the ref.');
   } catch (error) {
     return respondError(500, error.message);
@@ -74,17 +82,26 @@ export async function DELETE(req) {
 }
 
 export async function POST(req) {
-  const timestamp = Date.now();
   let id = '', reply = '';
   try {
-    ({ id, reply } = await req.json());
+    const body = await req.json();
+    if (body?.constructor !== Object) {
+      throw new TypeError('Request body must be a JSON object.');
+    }
+    ({ id, reply } = body);
+    if ((typeof id !== 'string') || !ID_CHARS.test(id)) {
+      throw new Error('Invalid "id" value.');
+    } else if (typeof reply !== 'string') {
+      throw new Error('"reply" must be a string.');
+    }
   } catch (error) {
     return respondError(400, error.message);
   }
-  const path = `data/unproxied/${id}.json`;
+  const timestamp = Date.now();
   const replied = local(timestamp);
+  const path = `data/unproxied/${id}.json`;
   try {
-    await updateJSON(path, { replied, reply }, `Update ${id}`, assign);
+    await updateJSON(path, { replied, reply }, `Update ${id}`, updatePost);
   } catch (error) {
     return respondError(500, error.message);
   }

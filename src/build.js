@@ -18,12 +18,13 @@ const { output, mode = 'dev', suffix = '' } = parseArgs({
 
 const outputDir = resolve(output);
 const sourceDir = process.cwd();
+const configBase = sourceDir + sep + 'config';
 
 const listName = `lists${suffix}`;
 const postName = `posts${suffix}`;
 const searchName = `search${suffix}`;
 
-const loadingConfig = readJSONFile(sourceDir + sep + 'config.json');
+const loadingConfig = readJSONFile(`${configBase}.json`);
 const loadingLayouts = import('../layouts/index.js');
 
 const makingDirs = (async () => {
@@ -103,16 +104,12 @@ const promise = readFile(proxiedFile, 'utf-8').then((text) => {
   return posts;
 }).catch(handleNoData);
 
-const unproxiedPosts = (
-  (mode === 'archive') ? [] :
-  await readdir(unproxiedDir).then(async (names) => {
-    if (names.length === 0) return names;
-    return (await Promise.all(names.map(async (name) => {
-      const data = await readJSONFile(unproxiedDir + sep + name);
-      return createPost(data);
-    }))).sort(compare);
-  }).catch(handleNoData)
-);
+const unproxiedPosts = (mode === 'archive') ? [] : await (async () => {
+  const names = await readdir(unproxiedDir).catch(handleNoData);
+  if (names.length === 0) return names;
+  const promises = names.map(e => readJSONFile(unproxiedDir + sep + e).then(createPost));
+  return (await Promise.all(promises)).sort(compare);
+})();
 
 const proxiedPosts = await promise;
 const entirePosts = proxiedPosts.concat(unproxiedPosts).sort(compare);
@@ -120,69 +117,62 @@ const totalPosts = site.totalPosts = entirePosts.length;
 
 if (mode === 'production') {
   // Export the initialized configuration as an ECMAScript module
-  const file = sourceDir + sep + 'config.js';
-  writeFile(file, `export default ${JSON.stringify(site)};\n`);
+  writeFile(`${configBase}.js`, `export default ${JSON.stringify(site)};\n`);
 }
 
 site.posts = entirePosts;
+
 const { createPages, renderList, renderPost } = await loadingLayouts;
 const pages = createPages(site);
+let paths = Object.keys(pages);
+let fellThrough = false;
 
 await (await makingDirs)?.(pages);
 
-if (mode === 'proxy') {
-  writePage(createPage('/404.html'));
-
-  for (const post of proxiedPosts) {
-    writePage(post, renderPost);
-  }
-} else {
-  if (mode === 'archive') {
-    const postDir = `${postName}/`;
-    const searchDir = `${searchName}/`;
-    for (const path in pages) {
-      if (path.startsWith(postDir, 1) || path.startsWith(searchDir, 1)) {
-        writePage(createPage(path));
-      }
-    }
-
+switch (mode) {
+  case 'proxy':
+    fellThrough = true;
+  case 'archive': {
     writePage(createPage('/404.html'));
-
     for (const post of proxiedPosts) {
       writePage(post, renderPost);
     }
-  } else {
+    if (fellThrough) break;
+    const postDir = `${postName}/`;
+    const searchDir = `${searchName}/`;
+    paths = paths.filter(e => e.startsWith(searchDir, 1) || e.startsWith(postDir, 1));
+    fellThrough = true;
+  }
+  default: {
+    for (const path of paths) {
+      writePage(createPage(path));
+    }
+    for (const post of unproxiedPosts) {
+      writePage(post, renderPost);
+    }
+    const { perPage } = site;
+    const totalPages = (totalPosts > perPage) ? Math.ceil(totalPosts / perPage) : 1;
+    const first = `/${listName}/1.html`;
+    const last = `/${listName}/${totalPages}.html`;
+    let path = first, prev = null, i = 0, n = 1;
+    do {
+      const number = n;
+      const posts = entirePosts.slice(i, i += perPage);
+      const next = (number < totalPages) ? `/${listName}/${++n}.html` : null;
+      writePage({
+        path,
+        permalink: baseURL + path,
+        type: 'list',
+        paginator: { number, posts, totalPosts, totalPages, first, prev, next, last },
+      }, renderList);
+      prev = path;
+      path = next;
+    } while (i < totalPosts);
+    if (fellThrough) break;
     const file = outputDir + normalize('/box/replied.json');
     const keys = ['id', 'message', 'sent', 'reply', 'replied', 'color'];
     writeFile(file, JSON.stringify(unproxiedPosts, keys) + '\n');
-
-    for (const path in pages) {
-      writePage(createPage(path));
-    }
   }
-
-  for (const post of unproxiedPosts) {
-    writePage(post, renderPost);
-  }
-
-  const { perPage } = site;
-  const totalPages = (totalPosts > perPage) ? Math.ceil(totalPosts / perPage) : 1;
-  const first = `/${listName}/1.html`;
-  const last = `/${listName}/${totalPages}.html`;
-  let path = first, prev = null, i = 0, n = 1;
-  do {
-    const number = n;
-    const posts = entirePosts.slice(i, i += perPage);
-    const next = (number < totalPages) ? `/${listName}/${++n}.html` : null;
-    writePage({
-      path,
-      permalink: baseURL + path,
-      type: 'list',
-      paginator: { number, posts, totalPosts, totalPages, first, prev, next, last },
-    }, renderList);
-    prev = path;
-    path = next;
-  } while (i < totalPosts);
 }
 
 function compare(a, b) {
@@ -195,21 +185,17 @@ function createPage(path) {
   return Object.assign(page, pages[path]);
 }
 
-function createPost({ id, message, sent, reply, replied, width, height, color }) {
+function createPost(data) {
+  const { id } = data;
   const path = `/${postName}/${id}.html`;
   return {
+    ...data,
+    sent: normalizeDateTime(data.sent),
+    replied: normalizeDateTime(data.replied),
     path,
     permalink: baseURL + path,
     type: 'post',
-    id,
-    message,
-    sent: normalizeDateTime(sent),
-    reply,
-    replied: normalizeDateTime(replied),
     image: `/images${suffix}/${id}.png`,
-    width,
-    height,
-    color,
   };
 }
 

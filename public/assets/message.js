@@ -7,7 +7,7 @@
 const { classList } = document.documentElement;
 classList.add('message-enabled', 'message-loading');
 
-customElements.define('message-color', class extends HTMLElement {
+customElements.define('message-init', class extends HTMLElement {
   connectedCallback() {
     const { elements } = document.getElementById('message');
     const content = document.getElementById('message-color');
@@ -17,11 +17,9 @@ customElements.define('message-color', class extends HTMLElement {
     let value = null;
     try {
       value = localStorage.getItem('color');
-    } catch (e) {}
+    } catch {}
     if (value) {
-      const { color } = elements;
-      for (let i = color.length - 1; i >= 0; --i) {
-        const radio = color[i];
+      for (const radio of elements.color) {
         if (radio.value !== value) continue;
         checkbox.checked = radio.checked = true;
         icon.setAttribute('data-color', value);
@@ -56,15 +54,19 @@ customElements.define('message-color', class extends HTMLElement {
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('message');
-  const count = document.getElementById('message-count').lastChild;
-  const button = form.querySelector('[type=submit]');
-  const textbox = form.elements.message;
-  const { maxLength } = textbox;
+  const submitButton = form.querySelector('[type=submit]');
+  const countText = document.getElementById('message-count').lastChild;
+  const { message: messagebox, spoiler: spoilerCheck, color } = form.elements;
+  const spoilerDesc = document.getElementById(spoilerCheck.getAttribute('aria-describedby'));
+  const { maxLength } = messagebox;
 
-  const countChars = textbox.oninput = () => {
-    const length = textbox.textLength;
-    count.data = `${length}`;
-    button.disabled = (length > maxLength);
+  const getPlainTextLength = () => messagebox.value.replaceAll('`', '').length;
+  const getTextLength = () => messagebox.textLength;
+
+  messagebox.oninput = () => {
+    const length = (spoilerCheck.checked ? getPlainTextLength : getTextLength)();
+    countText.data = `${length}`;
+    submitButton.disabled = (length > maxLength);
     if (window.onbeforeunload === null) {
       if (length > 0) window.onbeforeunload = warn;
     } else if (length === 0) {
@@ -72,29 +74,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  initialize();
+  spoilerCheck.onchange = () => {
+    spoilerDesc.hidden = !spoilerCheck.checked;
+    messagebox.oninput();
+  };
 
-  function initialize() {
+  init();
+
+  function init() {
+    spoilerCheck.onclick = null;
     form.onsubmit = submit;
-    textbox.readOnly = button.disabled = false;
-    textbox.removeAttribute('maxlength');
-    countChars();
+    messagebox.readOnly = submitButton.disabled = false;
+    messagebox.removeAttribute('maxlength');
+    messagebox.oninput();
   }
 
   function submit(event) {
-    const message = textbox.value = textbox.value.trimEnd();
-    count.data = `${message.length}`;
-    textbox.maxLength = maxLength;
+    const message = messagebox.value = messagebox.value.trimEnd();
+    countText.data = `${message.length}`;
+    messagebox.maxLength = maxLength;
     if (!form.reportValidity()) return event.preventDefault();
-    form.onsubmit = (event) => event.preventDefault();
-    textbox.readOnly = button.disabled = true;
+    messagebox.readOnly = submitButton.disabled = true;
+    form.onsubmit = spoilerCheck.onclick = (event) => event.preventDefault();
     window.onbeforeunload = null;
-    window.addEventListener('pageshow', initialize, { once: true });
-    localStorage.setItem('message', message);
+    window.addEventListener('pageshow', init, { once: true });
+    localStorage.setItem('message', JSON.stringify({
+      message,
+      spoiler: spoilerCheck.checked,
+      color: color.value || undefined,
+    }));
   }
 
   function warn(event) {
-    if (textbox.value.trim() === '') return;
+    if (messagebox.value.trim() === '') return;
     event.preventDefault();
     event.returnValue = true;
   }

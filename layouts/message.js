@@ -20,6 +20,9 @@ export default () => Object.keys(colors).reduce((code, name) => {
   float: right;
   text-align: right;
 }
+.message-count + .message-line {
+  margin-top: 1em;
+}
 .message-count,
 .message-loading .message-color,
 .color-remember {
@@ -29,16 +32,13 @@ export default () => Object.keys(colors).reduce((code, name) => {
 .message-enabled .color-remember {
   display: block;
 }
-.message-toggle {
-  padding: 1em 0 0;
+.color-label::after,
+.color-icon:not(#confirm-icon)::before {
+  content: ' ';
 }
 .color-icon {
   display: inline-flex;
   align-items: center;
-}
-.color-label::after,
-.color-icon::before {
-  content: ' ';
 }
 .color-icon::after {
   content: '';
@@ -53,5 +53,11 @@ export default () => Object.keys(colors).reduce((code, name) => {
 .color-remember,
 .message-submit {
   text-align: right;
+}
+.confirm-color {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  white-space: pre;
 }
 `);

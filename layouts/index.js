@@ -25,15 +25,18 @@ export { list as renderList, post as renderPost };
 export function createPages({ posts, timeOffset, suffix, perPage }) {
   const length = 19 + timeOffset.length; // 'YYYY-mm-ddTHH:MM:SS'.length: 19
   for (const post of posts) {
-    const { color = '익명의' } = post;
+    const { color = '익명의', spoiler = false } = post;
     const sender = post.sender = `${color} 쪽지`;
     const sent = post.sentData = trimDateTime(post.sent, length, timeOffset);
     const text = post.sentText = formatDateTime(sent);
     const replied = post.repliedData = trimDateTime(post.replied, length, timeOffset);
     post.repliedText = formatDateTime(replied);
     post.title = formatTitle(sent, text, sender);
+    if (spoiler) {
+      post.censoredMessage = post.message.split('`');
+      post.censoredReply = post.reply.split('`');
+    }
   }
-
   return {
     '/': {
       layout: home,
@@ -58,8 +61,8 @@ export function createPages({ posts, timeOffset, suffix, perPage }) {
     },
     [`/search${suffix}/index.json`]: {
       layout: () => JSON.stringify(posts.map((post) => {
-        const { id, message, sentData, reply, repliedData, color } = post;
-        return { id, message, sent: sentData, reply, replied: repliedData, color };
+        const { id, message, sentData, reply, repliedData, color, spoiler } = post;
+        return { id, message, sent: sentData, reply, replied: repliedData, color, spoiler };
       })) + '\n',
     },
     '/submit/ok.html': {

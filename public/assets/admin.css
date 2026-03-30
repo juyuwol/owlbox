@@ -48,8 +48,8 @@ SPDX-License-Identifier: 0BSD
   content: ' | ';
 }
 .admin-nav,
-.box-tabs,
-.box-pager {
+.box-pager,
+#box-tablist {
   margin: var(--lh) 0;
 }
 .box-tab:not(:first-child) {
@@ -62,7 +62,7 @@ SPDX-License-Identifier: 0BSD
   display: inline-block;
   min-width: 3em;
 }
-.box-post-heading {
+.box-heading {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
@@ -71,28 +71,31 @@ SPDX-License-Identifier: 0BSD
   font-weight: normal;
   font-size: 1rem;
 }
-.box-message {
-  margin-bottom: 0;
+img:not([hidden]) + .box-message {
+  height: 44px;
 }
 .box-count {
+  float: right;
   font-size: 0.875rem;
   margin-top: var(--ld);
   text-align: right;
 }
-.box-submit,
-.settings-submit {
+.box-spoiler {
+  font-size: 0.875rem;
+  margin-top: 1em;
+}
+.submit {
   text-align: right;
 }
 .settings-item {
   margin: calc(var(--ld) * 1.5) 0;
 }
-.settings-field {
+.settings-label {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   white-space: pre;
 }
-.settings-field + br,
-.settings-field-textarea + br {
+.settings-label + br {
   display: none;
 }
 .settings-input {

@@ -5,29 +5,48 @@ import { readFile } from 'node:fs/promises';
 import CanvasKitInit from 'canvaskit-wasm';
 import { colors, fonts, style } from '../layouts/card.js';
 import { ImageBuilder } from '../src/image.js';
-import { KV_KEY, configGitHub, http, json, kv, local, respondError } from '../src/vercel.js';
+import { ID_CHARS, KV_KEY, configGitHub, http, json, kv, local, respondError } from '../src/vercel.js';
 import site from '../config.js';
 
+const { suffix } = site;
 const initingCanvasKit = CanvasKitInit();
 const fontDir = process.cwd() + '/fonts/';
 const fontFiles = await Promise.all(fonts.map(e => readFile(fontDir + e)));
 const CanvasKit = await initingCanvasKit;
-const { suffix } = site;
 
 export async function POST(req) {
-  const timestamp = Date.now();
-  let id = '', sent = '', message = '', reply = '', color;
+  let id = '', sent = '', message = '', reply = '', color, spoiler;
   try {
-    ({ id, sent, message, reply, color } = await req.json());
+    const body = await req.json();
+    if (body?.constructor !== Object) {
+      throw new TypeError('Request body must be a JSON object.');
+    }
+    ({ id, sent, message, reply, color, spoiler } = body);
+    if ((typeof id !== 'string') || !ID_CHARS.test(id)) {
+      throw new Error('Invalid "id" value.');
+    } else if (typeof message !== 'string') {
+      throw new TypeError('"message" must be a string.');
+    }
   } catch (error) {
     return respondError(400, error.message);
   }
 
+  const timestamp = Date.now();
   const hasColor = color ? colors.hasOwnProperty(color) : false;
   const imageStyle = hasColor ? { ...style, frameColor: colors[color] } : style;
+  let safeMessage = message;
+  if (spoiler) {
+    const strs = safeMessage.split('`');
+    if (strs.length > 1) {
+      safeMessage = strs.reduce((a, b, i) => a + ((i % 2) ? '○'.repeat(b.length) : b));
+    } else if (!reply.includes('`')) {
+      spoiler = undefined;
+    }
+  }
+
   try {
-    const image = ImageBuilder.generate(CanvasKit, fontFiles, imageStyle, message);
-    const content = JSON.stringify({
+    const image = ImageBuilder.generate(CanvasKit, fontFiles, imageStyle, safeMessage);
+    const text = JSON.stringify({
       id,
       sent,
       message,
@@ -36,6 +55,7 @@ export async function POST(req) {
       width: image.width,
       height: image.height,
       color,
+      spoiler,
     }, undefined, 2) + '\n';
 
     const { baseURL, headers, branch } = configGitHub();
@@ -64,12 +84,12 @@ export async function POST(req) {
     // https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#create-a-tree
     const { sha: tree } = await json(`${baseURL}/git/trees`, {
       method: 'POST',
-      headers, // No need to escape sha and id
-      body: `{"base_tree":"${baseTree}","tree":[\
-{"mode":"100644","type":"blob","path":"data/unproxied/${id}.json",\
-"content":${JSON.stringify(content)}},\
-{"mode":"100644","type":"blob","path":"public/images${suffix}/${id}.png",\
-"sha":"${blob}"}]}`,
+      headers,
+      body: `{"base_tree":"${baseTree // No need to escape sha and id
+      }","tree":[{"mode":"100644","type":"blob","path":"data/unproxied/${id
+      }.json","content":${JSON.stringify(text)
+      }},{"mode":"100644","type":"blob","path":"public/images${suffix}/${id
+      }.png","sha":"${blob}"}]}`,
     }, 'Failed to create a tree.');
 
     // Create a commit that uses the tree created above
@@ -84,8 +104,8 @@ export async function POST(req) {
     // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
     await http(`${baseURL}/git/refs/heads/${ref}`, {
       method: 'PATCH',
-      headers, // No need to escape sha
-      body: `{"sha":"${sha}"}`,
+      headers,
+      body: `{"sha":"${sha}"}`, // No need to escape sha
     }, 'Failed to update the ref.');
 
     // Remove the message from the unreplied database

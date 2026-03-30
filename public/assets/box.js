@@ -3,501 +3,492 @@
 
 import { handleError } from './error.js';
 
-let posts = null;
-let temp = null;
-let page = 1;
-let size = 1;
-let tab = '';
-
-const baseURL = new URL('/', location.href).href.slice(0, -1);
-const selectedIds = new Set();
-const removedIds = new Set();
-const pages = new Map();
-const urls = new Set();
-
-const {
-  offset,
-  offsetMilliseconds,
-  perPage,
-  postDir,
-  unrepliedConfirm,
-  unrepliedOK,
-  repliedConfirm,
-  repliedOK,
-  deleteConfirm,
-  deleteOK,
-} = JSON.parse(document.getElementById('box-config').text);
-
-const { content } = document.getElementById('box-content');
-const contentBlock = content.firstElementChild;
-const refreshButton = content.getElementById('refresh');
-const deleteButton = content.getElementById('delete');
-const statusLine = content.getElementById('box-status');
-const totalText = content.getElementById('box-total').lastChild;
-const list = content.getElementById('box-list');
-const loadingLine = document.getElementById('box-loading');
-const tabList = document.getElementById('tab');
-const tabNodes = tabList.elements.tab;
-const tabNodesAvailable = [...tabNodes].filter(e => !e.disabled);
-
-const createBlock = {
-  unreplied: createUnrepliedCreator(createPublishedCreator()),
-  replied: createRepliedCreator(),
-  selected: createSelectedCreator(),
-};
-
-const slicemap = (
-  ('map' in Iterator.prototype) ?
-  (iterator, drop, take, map) => iterator.drop(drop).take(take).map(map) :
-  function* (iterator, drop, take, map) {
-    for (; drop > 0; --drop) iterator.next();
-    for (const value of iterator) {
-      yield map(value);
-      if (--take === 0) break;
-    }
+const controllers = new (class AbortControllerSet extends Set {
+  abort() {
+    for (const e of this) e.abort();
+    this.clear();
   }
-);
 
-document.addEventListener('box-render', () => {
-  let blocks = pages.get(page);
-  if (blocks === undefined) {
-    const start = (page - 1) * perPage;
-    blocks = slicemap(posts.values(), start, perPage, createBlock[tab]);
-  }
-  list.replaceChildren(...blocks);
-  statusLine.setAttribute('tabindex', '-1');
-  statusLine.focus({ preventScroll: true });
-  statusLine.blur();
-  statusLine.removeAttribute('tabindex');
-  const y = statusLine.getBoundingClientRect().y - 8;
-  if (y < 0) window.scrollBy(0, y);
-});
-
-definePager();
-defineCheckbox();
-
-if (tabNodes.value === '') {
-  tabNodesAvailable[0].checked = true;
-}
-
-(refreshButton.onclick = tabList.onchange = async () => {
-  for (const radio of tabNodesAvailable) {
-    radio.disabled = true;
-  }
-  contentBlock.remove();
-  tabList.after(loadingLine);
-  posts = new Map();
-  tab = tabNodes.value;
-  selectedIds.clear();
-  initializeDeleteButton();
-  try {
-    const res = await fetch(`${tab}.json`).then(handleError);
-    for (const post of await res.json()) {
-      const { sent, replied } = post;
-      posts.set(post.id, post);
-      post.sent = normalizeDateTime(sent);
-      if (replied === undefined) continue;
-      post.replied = normalizeDateTime(replied);
-    }
-  } catch (error) {
-    for (const radio of tabNodes) {
-      radio.checked = false;
-    }
-    loadingLine.remove();
-    return window.alert(error.message);
-  }
-  initializePage();
-  loadingLine.replaceWith(contentBlock);
-  for (const radio of tabNodesAvailable) {
-    radio.disabled = false;
+  create() {
+    const controller = new AbortController();
+    this.add(controller);
+    return controller;
   }
 })();
 
-function createPublishedCreator() {
-  async function untilPublished(url, delay, limit) {
-    const init = { method: 'HEAD' };
-    const sleep = (e) => void setTimeout(e, 1000, true);
-    if (delay > 0) await new Promise(e => void setTimeout(e, delay * 1000));
-    do {
-      const { ok } = await fetch(url, init);
-      if (ok) return;
-    } while ((--limit > 0) && (await new Promise(sleep)));
-    throw new Error();
+const posts = new Map();
+const selectedItems = new Map();
+const itemsByPage = new Map();
+const publishedIds = [];
+const objectURLs = [];
+let selected = false;
+let dataset = posts;
+let tab = '';
+let page = 1;
+let lastPage = 1;
+
+const baseURL = new URL('/', location.href).href.slice(0, -1);
+const {
+  offset, offsetMilliseconds,
+  perPage,
+  postDir,
+  unrepliedConfirm, unrepliedOK,
+  repliedConfirm, repliedOK,
+  deleteConfirm, deleteOK,
+} = JSON.parse(document.getElementById('box-config').text);
+
+const { content } = document.getElementById('box-content');
+const tabpanel = content.firstElementChild;
+const refreshButton = content.getElementById('box-refresh');
+const deleteButton = content.getElementById('box-delete');
+const statusbar = content.getElementById('box-status');
+const totalText = content.getElementById('box-total').lastChild;
+const list = content.getElementById('box-list');
+const loadingbar = document.getElementById('box-loading');
+const tablist = document.getElementById('box-tablist');
+const tabs = tablist.elements.tab;
+
+const createUnrepliedItem = (() => {
+  const progressTemplate = document.getElementById('box-progress').content;
+  const tweetTemplate = document.getElementById('box-tweet').content.firstElementChild;
+  const retryTemplate = document.getElementById('box-retry').content.firstElementChild;
+  const template = document.getElementById('box-unreplied').content.firstElementChild;
+  const sentText = template.querySelector('.sent').lastChild;
+  const { id: idInput, sent: sentInput } = template.elements;
+
+  return ({ id, sent, message, color, spoiler }) => {
+    idInput.value = id;
+    sentText.data = sentInput.value = sent;
+    const form = template.cloneNode(true);
+    const checkbox = form.querySelector('.select [type=checkbox]');
+    const countText = form.querySelector('.count').lastChild;
+    const messagebox = form.elements.message;
+    if (color) form.elements.color.value = color;
+    if (spoiler) form.elements.spoiler.checked = true;
+    form.onsubmit = publishPost;
+    checkbox.onchange = toggleSelection;
+    messagebox.value = message;
+    (messagebox.oninput = () => void (countText.data = `${messagebox.textLength}`))();
+    return form;
+  };
+
+  function removeInputLimit(event) {
+    event.currentTarget.removeAttribute('maxlength');
   }
 
-  const template = document.getElementById('box-published').content.firstElementChild;
-  const tweetTemplate = document.getElementById('box-published-tweet').content.firstElementChild;
-  const retryTemplate = document.getElementById('box-published-retry').content.firstElementChild;
-  const sentText = template.querySelector('.sent').lastChild;
-  const messageText = template.querySelector('.message').lastChild;
-  const repliedText = template.querySelector('.replied').lastChild;
-  const replyText = template.querySelector('.reply').lastChild;
-  const postLink = template.querySelector('.link');
-  const image = template.querySelector('.image');
-
-  return async ({ id, reply, message, sent }, res) => {
-    const loading = res.blob();
-    const postURL = pathById(id);
-    sentText.data = sent;
-    messageText.data = image.alt = message;
-    repliedText.data = local(res.headers.get('last-modified'));
-    replyText.data = reply;
-    postLink.href = postURL;
-
-    const tweetLine = tweetTemplate.cloneNode(true);
-    const tweetLink = tweetLine.querySelector('.tweet');
-    const imageURL = URL.createObjectURL(await loading);
-    image.src = imageURL;
-    tweetLink.search = new URLSearchParams({ text: `${reply} ${postURL}` });
-    urls.add(imageURL);
-
-    const block = template.cloneNode(true);
-    const loadingLine = block.querySelector('.loading');
-
-    const enable = () => loadingLine.replaceWith(tweetLine);
-    untilPublished(postURL, 10, 10).then(enable).catch(() => {
-      const retry = retryTemplate.cloneNode(true);
-      const button = retry.querySelector('.retry');
-      loadingLine.replaceWith(retry);
-      button.onclick = async () => {
-        retry.replaceWith(loadingLine);
-        try {
-          await untilPublished(postURL, 0, 10);
-        } catch (e) {
-          return loadingLine.replaceWith(retry);
-        }
-        enable();
-        retry.replaceWith(tweetLine);
-      };
-    });
-
-    return block;
-  };
-}
-
-function createUnrepliedCreator(createPublished) {
-  async function submit(event) {
+  async function publishPost(event) {
     event.preventDefault();
+    if (!window.confirm(unrepliedConfirm)) return;
+
     const form = event.currentTarget;
-    const { message: messageBox, reply: replyBox } = form.elements;
-    if (messageBox.textLength > 1000) {
-      const { oninput } = messageBox;
-      messageBox.maxLength = 1000;
+    const messagebox = form.elements.message;
+    if (messagebox.textLength > 1000) {
+      messagebox.maxLength = 1000;
+      messagebox.addEventListener('input', removeInputLimit, { once: true });
       form.reportValidity();
-      messageBox.oninput = () => {
-        messageBox.removeAttribute('maxlength');
-        (messageBox.oninput = oninput)();
-      };
       return;
     }
-    if (!window.confirm(unrepliedConfirm)) return;
-    const button = form.querySelector('[type=submit]');
+
+    const post = Object.fromEntries(new FormData(form));
+    if (!post.color) delete post.color;
+    if (post.spoiler) post.spoiler = true;
+
+    const controller = controllers.create();
+    const locked = lockForm(form);
     form.onsubmit = (event) => event.preventDefault();
-    messageBox.readOnly = replyBox.readOnly = button.disabled = true;
     try {
-      const entries = new FormData(form);
-      const color = entries.get('color');
-      if (color === '') entries.delete('color');
-      const data = Object.fromEntries(entries);
       const res = await fetch(form.action, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(post),
         credentials: 'include',
       }).then(handleError);
-      const { id } = data;
-      removedIds.add(id);
-      if (selectedIds.delete(id) && (selectedIds.size === 0)) {
-        deleteButton.disabled = true;
-      }
-      form.replaceWith(await createPublished(data, res));
-      cachePage();
-      window.alert(unrepliedOK);
+      const blob = await res.blob();
+      controller.signal.throwIfAborted();
+      const url = URL.createObjectURL(blob);
+      post.replied = toLocalDateTime(res.headers.get('last-modified'));
+      post.image = url;
+      objectURLs.push(url);
     } catch (error) {
-      form.onsubmit = submit;
-      messageBox.readOnly = replyBox.readOnly = button.disabled = false;
+      if (error.name === 'AbortError') return;
+      form.onsubmit = publishPost;
+      unlockForm(locked);
       window.alert(error.message);
-    }
-  }
-
-  const template = document.getElementById('box-unreplied').content.firstElementChild;
-  const sentText = template.querySelector('.sent').lastChild;
-  const { color: colorBox, id: idInput, sent: sentInput } = template.elements;
-  const colorMap = new Map();
-  for (let i = colorBox.length - 1; i > 0; --i) {
-    colorMap.set(colorBox.item(i).value, i);
-  }
-
-  return (post) => {
-    const { color } = post;
-    const id = idInput.value = post.id;
-    sentText.data = sentInput.value = post.sent;
-    const form = template.cloneNode(true);
-    const countText = form.querySelector('.count').lastChild;
-    const { color: colorBox, message: messageBox } = form.elements;
-    if (color !== undefined) colorBox.item(colorMap.get(color)).selected = true;
-    form.setAttribute('id', id);
-    form.onsubmit = submit;
-    messageBox.value = post.message;
-    (messageBox.oninput = () => void (countText.data = `${messageBox.textLength}`))();
-    return form;
-  };
-}
-
-function createRepliedCreator() {
-  async function submit(event) {
-    event.preventDefault();
-    if (!window.confirm(repliedConfirm)) return;
-    const form = event.currentTarget;
-    const button = form.querySelector('[type=submit]');
-    const replyBox = form.elements.reply;
-    form.onsubmit = (event) => event.preventDefault();
-    replyBox.readOnly = button.disabled = true;
-    try {
-      const data = Object.fromEntries(new FormData(form));
-      const { headers } = await fetch(form.action, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      }).then(handleError);
-      const repliedText = form.querySelector('.replied').lastChild;
-      const replyText = form.querySelector('.reply').lastChild;
-      const tweetLink = form.querySelector('.tweet');
-      const reply = replyText.data = data.reply;
-      repliedText.data = local(headers.get('last-modified'));
-      tweetLink.search = new URLSearchParams({ text: `${reply} ${pathById(data.id)}` });
-      window.alert(repliedOK);
-    } catch (error) {
-      window.alert(error.message);
+      return;
     } finally {
-      form.onsubmit = submit;
-      replyBox.readOnly = button.disabled = false;
+      controllers.delete(controller);
     }
+
+    const { id } = post;
+    publishedIds.push(id);
+    deselect(id);
+
+    let { message, reply } = post;
+    if (post.spoiler) {
+      message = messagebox.value = censorSpoilers(message);
+      reply = form.elements.reply.value = censorSpoilers(reply);
+    }
+
+    const path = pathById(id);
+    const img = form.querySelector('.image');
+    img.src = post.image;
+    img.alt = message;
+    form.querySelector('.select').remove();
+    form.querySelector('.link').setAttribute('href', path);
+    form.querySelector('.replied').append(post.replied);
+    for (const e of form.querySelectorAll('.onpublish[hidden]')) {
+      e.hidden = false;
+    }
+
+    pollUntilAvailable(form.querySelector('.submit'), path, reply, 10, 10);
+    window.alert(unrepliedOK);
   }
 
+  async function pollUntilAvailable(container, path, reply, limit, delay) {
+    const controller = controllers.create();
+    container.replaceChildren(progressTemplate.cloneNode(true));
+    try {
+      const { signal } = controller;
+      if (delay > 0) {
+        const end = performance.now() + (delay * 1000);
+        do { // Background tabs throttle timers; check real elasped time.
+          await new Promise(second);
+          signal.throwIfAborted();
+        } while (performance.now() < end);
+      }
+      const init = { method: 'HEAD', signal };
+      while (!(await fetch(path, init)).ok) {
+        if (--limit === 0) throw new Error();
+        await new Promise(second);
+        signal.throwIfAborted();
+      }
+      const tweetLink = tweetTemplate.cloneNode(true);
+      tweetLink.search = tweetQuery(reply, path);
+      container.replaceChildren(tweetLink);
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      const retryButton = retryTemplate.cloneNode(true);
+      retryButton.onclick = () => pollUntilAvailable(container, path, reply, 10, 0);
+      container.replaceChildren(retryButton);
+    } finally {
+      controllers.delete(controller);
+    }
+  }
+})();
+
+const createRepliedItem = (() => {
   const template = document.getElementById('box-replied').content.firstElementChild;
-  const postLink = template.querySelector('.sent');
-  const sentText = postLink.lastChild;
+  const postLink = template.querySelector('.link');
+  const sentText = template.querySelector('.sent').lastChild;
   const messageText = template.querySelector('.message').lastChild;
   const repliedText = template.querySelector('.replied').lastChild;
   const replyText = template.querySelector('.reply').lastChild;
   const tweetLink = template.querySelector('.tweet');
-  const { id: idInput, reply: replyBox } = template.elements;
+  const { id: idInput, reply: replybox } = template.elements;
 
-  return (post) => {
-    const { color } = post;
-    const id = idInput.value = post.id;
-    const reply = replyBox.value = replyText.data = post.reply;
-    const postURL = pathById(id);
-    postLink.href = postURL;
-    sentText.data = post.sent;
-    messageText.data = post.message;
-    repliedText.data = post.replied;
-    tweetLink.search = new URLSearchParams({ text: `${reply} ${postURL}` });
+  return ({ id, sent, message, color, spoiler, replied, reply }) => {
+    const path = pathById(id);
+    const safeReply = spoiler ? censorSpoilers(reply) : reply;
+    idInput.value = id;
+    sentText.data = sent;
+    messageText.data = message;
+    repliedText.data = replied;
+    replybox.value = replyText.data = reply;
+    tweetLink.search = tweetQuery(safeReply, path);
+    postLink.setAttribute('href', path);
     const form = template.cloneNode(true);
-    const colorBox = form.querySelector('.color');
-    if (color === undefined) {
-      colorBox.remove();
-    } else {
-      colorBox.lastChild.data = color;
-    }
-    form.setAttribute('id', id);
-    form.onsubmit = submit;
+    const checkbox = form.querySelector('.select [type=checkbox]');
+    const colorContainer = form.querySelector('.color');
+    form.onsubmit = updatePost;
+    checkbox.onchange = toggleSelection;
+    color ? colorContainer.append(color) : colorContainer.remove();
     return form;
   };
-}
 
-function createSelectedCreator() {
-  function deselect(event) {
-    const checkbox = event.currentTarget;
-    if (checkbox.checked) return;
-    posts.delete(checkbox.value);
-    if (posts.size > 0) {
-      initializePage();
-    } else {
-      restore();
+  async function updatePost(event) {
+    event.preventDefault();
+    if (!window.confirm(repliedConfirm)) return;
+    let aborted = false;
+    const form = event.currentTarget;
+    const post = Object.fromEntries(new FormData(form));
+    const controller = controllers.create();
+    const locked = lockForm(form);
+    form.onsubmit = (event) => event.preventDefault();
+    try {
+      const { headers } = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post),
+        credentials: 'include',
+      }).then(handleError);
+      controller.signal.throwIfAborted();
+      post.replied = toLocalDateTime(headers.get('last-modified'));
+    } catch (error) {
+      if (aborted = (error.name === 'AbortError')) return;
+      window.alert(error.message);
+      return;
+    } finally {
+      controllers.delete(controller);
+      if (!aborted) {
+        form.onsubmit = updatePost;
+        unlockForm(locked);
+      }
     }
+    const { id, reply } = post;
+    const { spoiler } = Object.assign(posts.get(id), post);
+    const path = pathById(id);
+    const safeReply = spoiler ? censorSpoilers(reply) : reply;
+    form.querySelector('.replied').lastChild.data = post.replied;
+    form.querySelector('.reply').lastChild.data = reply;
+    form.querySelector('.tweet').search = tweetQuery(safeReply, path);
+    window.alert(repliedOK);
   }
+})();
 
-  const template = document.getElementById('box-selected').content.firstElementChild;
-  const sentText = template.querySelector('.sent').lastChild;
-  const messageText = template.querySelector('.message').lastChild;
-  const repliedBlock = template.querySelector('.replied');
-  const repliedText = repliedBlock.lastChild;
-  const replyBlock = template.querySelector('.reply');
-  const replyText = replyBlock.lastChild;
+const createItem = {
+  unreplied: createUnrepliedItem,
+  replied: createRepliedItem,
+};
 
-  return (post) => {
-    const { reply } = post;
-    const unreplied = replyBlock.hidden = repliedBlock.hidden = (reply === undefined);
-    sentText.data = post.sent;
-    messageText.data = post.message;
-    if (unreplied) {
-      replyText.data = repliedText.data = '';
-    } else {
-      repliedText.data = post.replied;
-      replyText.data = reply;
-    }
-    const block = template.cloneNode(true);
-    const checkbox = block.querySelector('[type=checkbox]');
-    checkbox.checked = true;
-    checkbox.value = post.id;
-    checkbox.onchange = deselect;
-    return block;
-  };
-}
-
-function defineCheckbox() {
-  function toggle(event) {
-    const checkbox = event.currentTarget;
-    const id = checkbox.value;
-    if (checkbox.checked) {
-      selectedIds.add(id);
-      deleteButton.disabled = false;
-    } else if (selectedIds.delete(id) && (selectedIds.size === 0)) {
-      deleteButton.disabled = true;
-    }
+document.addEventListener('box-render', () => {
+  let items = itemsByPage.get(page);
+  if (items === undefined) {
+    items = dataset.values().drop((page - 1) * perPage).take(perPage);
+    if (!selected) items = items.map(createItem[tab]);
   }
+  list.replaceChildren(...items);
+  statusbar.setAttribute('tabindex', '-1');
+  statusbar.focus({ preventScroll: true });
+  statusbar.blur();
+  statusbar.removeAttribute('tabindex');
+  const y = statusbar.getBoundingClientRect().y - 8;
+  if (y < 0) window.scrollBy(0, y);
+});
 
-  const template = document.getElementById('box-checkbox').content.firstElementChild;
-  customElements.define('box-checkbox', class extends HTMLElement {
-    constructor() {
-      super();
-      this.append(template.cloneNode(true));
-      const checkbox = this.querySelector('[type=checkbox]')
-      checkbox.value = checkbox.form.getAttribute('id');
-      checkbox.onchange = toggle;
-    }
-  });
-}
-
-function definePager() {
-  function turnPage(newPage) {
-    if (!pages.has(page)) cachePage();
-    page = newPage;
-    emit('box-render');
-  }
-
-  const turnToFirst = () => turnPage(1);
-  const turnToPrev = () => turnPage(Math.max(page - 1, 1));
-  const turnToNext = () => turnPage(Math.min(page + 1, size));
-  const turnToLast = () => turnPage(size);
-
+{
+  const first = () => goTo(1);
+  const prev = () => goTo(Math.max(page - 1, 1));
+  const next = () => goTo(Math.min(page + 1, lastPage));
+  const last = () => goTo(lastPage);
   const template = document.getElementById('box-pager').content.firstElementChild;
   customElements.define('box-pager', class extends HTMLElement {
     constructor() {
       super();
       this.append(template.cloneNode(true));
-
-      const currText = this.querySelector('.box-pager-curr').lastChild;
-      const sizeText = this.querySelector('.box-pager-size').lastChild;
-      const firstButton = this.querySelector('.box-pager-first');
-      const prevButton = this.querySelector('.box-pager-prev');
-      const nextButton = this.querySelector('.box-pager-next');
-      const lastButton = this.querySelector('.box-pager-last');
-
+      const currText = this.querySelector('.current').lastChild;
+      const totalText = this.querySelector('.total').lastChild;
+      const firstButton = this.querySelector('.first');
+      const prevButton = this.querySelector('.prev');
+      const nextButton = this.querySelector('.next');
+      const lastButton = this.querySelector('.last');
       const render = () => {
-        this.hidden = (posts.size === 0);
+        this.hidden = (dataset.size === 0);
         currText.data = `${page}`;
-        sizeText.data = `${size}`;
+        totalText.data = `${lastPage}`;
         prevButton.disabled = firstButton.disabled = (page === 1);
-        lastButton.disabled = nextButton.disabled = (page === size);
+        lastButton.disabled = nextButton.disabled = (page === lastPage);
       };
-
+      firstButton.onclick = first;
+      prevButton.onclick = prev;
+      nextButton.onclick = next;
+      lastButton.onclick = last;
       document.addEventListener('box-render', render);
-      firstButton.onclick = turnToFirst;
-      prevButton.onclick = turnToPrev;
-      nextButton.onclick = turnToNext;
-      lastButton.onclick = turnToLast;
       render();
     }
   });
 }
 
-async function deleteItems() {
-  if (!window.confirm(deleteConfirm)) return;
-  deleteButton.disabled = true;
-  const ids = [...posts.keys()];
+if (!tabs.value) for (const e of tabs) {
+  if (e.disabled) continue;
+  e.checked = true;
+  break;
+}
+
+deleteButton.onclick = () => (selected ? deleteSelected : renderSelected)();
+
+(refreshButton.onclick = tablist.onchange = async () => {
+  tabpanel.remove();
+  tablist.after(loadingbar);
+  posts.clear();
+  selectedItems.clear();
+  controllers.abort();
+  const controller = controllers.create();
+  tab = tabs.value;
   try {
-    await fetch(`${temp.tab}?id=${ids.join('&id=')}`, {
-      method: 'DELETE',
+    const { signal } = controller;
+    const res = await fetch(`${tab}.json`, {
       credentials: 'include',
+      signal,
     }).then(handleError);
+    const data = await res.json();
+    signal.throwIfAborted();
+    for (const post of data) {
+      const { replied } = post;
+      post.sent = normalizeDateTime(post.sent);
+      if (replied) post.replied = normalizeDateTime(replied);
+      posts.set(post.id, post);
+    }
   } catch (error) {
-    deleteButton.disabled = false;
-    return window.alert(error.message);
+    if (error.name === 'AbortError') return;
+    for (const e of tabs) e.checked = false;
+    loadingbar.remove();
+    window.alert(error.message);
+    return;
+  } finally {
+    controllers.delete(controller);
   }
-  for (const id of ids) {
-    temp.delete(id);
-  }
-  restore();
-  window.alert(deleteOK);
-}
-
-function cachePage() {
-  pages.set(page, Array.from(list.children));
-}
-
-function initializePage() {
-  removedIds.clear();
-  pages.clear();
-  if (urls.size > 0) {
-    for (const url of urls) URL.revokeObjectURL(url);
-    urls.clear();
-  }
-  const total = posts.size;
-  page = 1;
-  size = (total > 1) ? Math.ceil(total / perPage) : 1;
-  totalText.data = `${total}`;
-  emit('box-render');
-}
-
-function initializeDeleteButton() {
-  temp = null;
-  deleteButton.onclick = renderSelected;
   deleteButton.disabled = true;
+  renderTab();
+  loadingbar.replaceWith(tabpanel);
+})();
+
+function lockForm(form) {
+  const { elements } = form;
+  const locked = [];
+  for (let i = elements.length - 1; i >= 0; --i) {
+    const e = elements[i];
+    if (e.disabled || e.readOnly) continue;
+    if (e.matches(':read-write')) {
+      e.readOnly = true;
+      locked.push(e);
+    } else if (e instanceof HTMLSelectElement) {
+      // Disable all options except the selected one;
+      // pre-decrement (--i) skips the selected index (ex).
+      const { options, selectedIndex: ex } = e;
+      const disable = (e) => {
+        if (e.disabled) return;
+        e.disabled = true;
+        locked.push(e);
+      };
+      let i = options.length;
+      for (--i; i > ex; --i) disable(options[i]);
+      for (--i; i >= 0; --i) disable(options[i]);
+    } else {
+      e.disabled = true;
+      locked.push(e);
+    }
+  }
+  return locked;
+}
+
+function unlockForm(locked) {
+  for (const e of locked) {
+    if (e.readOnly) {
+      e.readOnly = false;
+    } else {
+      e.disabled = false;
+    }
+  }
+}
+
+function toggleSelection(event) {
+  const { checked, form } = event.currentTarget;
+  const id = form.elements.id.value;
+  if (selected) {
+    if (checked) return;
+    deselect(id) ? renderTab() : reset();
+  } else {
+    checked ? select(id, form) : deselect(id);
+  }
+}
+
+function select(id, item) {
+  selectedItems.set(id, item);
+  deleteButton.disabled = false;
+}
+
+function deselect(id) {
+  selectedItems.delete(id);
+  return (selectedItems.size === 0) && (deleteButton.disabled = true);
+}
+
+function reset() {
+  itemsByPage.clear();
+  for (const e of objectURLs) URL.revokeObjectURL(e);
+  publishedIds.length = objectURLs.length = 0;
+  const { size } = dataset;
+  totalText.data = `${size}`;
+  lastPage = (size > 1) ? Math.ceil(size / perPage) : 1;
+  page = 1;
+  document.dispatchEvent(new Event('box-render'));
+}
+
+function renderTab() {
+  selected = false;
+  dataset = posts;
+  reset();
 }
 
 function renderSelected() {
-  if (selectedIds.size === 0) return;
-  posts.tab = tab;
-  tab = 'selected';
-  temp = posts;
-  posts = new Map();
-  deleteButton.onclick = deleteItems;
-  const ids = [...selectedIds].sort((a, b) => (a < b) ? 1 : -1);
-  for (const id of ids) {
-    posts.set(id, temp.get(id));
+  let { size } = selectedItems;
+  if (size === 0) return;
+  for (const e of publishedIds) posts.delete(e);
+  for (const id of posts.keys()) {
+    const item = selectedItems.get(id);
+    if (item === undefined) continue;
+    selectedItems.delete(id);
+    selectedItems.set(id, item);
+    if (--size === 0) break;
   }
-  for (const id of removedIds) {
-    temp.delete(id);
+  selected = true;
+  dataset = selectedItems;
+  reset();
+}
+
+async function deleteSelected() {
+  if (!window.confirm(deleteConfirm)) return;
+  deleteButton.disabled = true;
+  const ids = [...selectedItems.keys()];
+  const controller = controllers.create();
+  try {
+    await fetch(`${tab}?id=${ids.join('&id=')}`, { // No need to escape id
+      method: 'DELETE',
+      credentials: 'include',
+    }).then(handleError);
+    controller.signal.throwIfAborted();
+  } catch (error) {
+    if (error.name === 'AbortError') return;
+    deleteButton.disabled = false;
+    window.alert(error.message);
+    return;
+  } finally {
+    controllers.delete(controller);
   }
-  selectedIds.clear();
-  initializePage();
+  for (const e of ids) posts.delete(e);
+  selectedItems.clear();
+  renderTab();
+  window.alert(deleteOK);
 }
 
-function restore() {
-  posts = temp;
-  tab = posts.tab;
-  initializeDeleteButton();
-  initializePage();
+function goTo(newPage) {
+  if (!itemsByPage.has(page)) {
+    itemsByPage.set(page, Array.from(list.children));
+  }
+  page = newPage;
+  document.dispatchEvent(new Event('box-render'));
 }
 
-function emit(type) {
-  document.dispatchEvent(new Event(type));
-}
-
-function local(date) {
-  return new Date(Date.parse(date) + offsetMilliseconds).toISOString().slice(0, 19) + offset;
-}
-
-function pathById(id) {
-  return `${baseURL}/${postDir}/${id}.html`;
+function censorSpoilers(str) {
+  return str.split('`').reduce((a, b, i) => a + ((i % 2) ? '(스포일러)' : b));
 }
 
 function normalizeDateTime(datetime) {
-  if (datetime.endsWith(offset)) return datetime;
-  const timestamp = Date.parse(datetime);
-  return new Date(timestamp + offsetMilliseconds).toISOString().slice(0, -1) + offset;
+  return datetime.endsWith(offset) ? datetime : toLocalDateTime(datetime);
+}
+
+function toLocalDateTime(datetime) {
+  const epochMilliseconds = Date.parse(datetime) + offsetMilliseconds;
+  return new Date(epochMilliseconds).toISOString().slice(0, 19) + offset;
+}
+
+function pathById(id) {
+  return `/${postDir}/${id}.html`;
+}
+
+function second(callback) {
+  setTimeout(callback, 1000);
+}
+
+function tweetQuery(reply, path) {
+  return new URLSearchParams({ text: `${reply} ${baseURL + path}` });
 }

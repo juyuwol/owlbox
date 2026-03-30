@@ -3,26 +3,28 @@
 
 import { escapeElement as e, escapeHTML as h } from './util.js';
 
-let uninitialized = true;
+const concatSpoiler = (a, b, i) => a + ((i % 2) ? '(스포일러)' : e(b));
+
+let uninited = true;
+let baseURL = '';
 let generator = '';
 let siteNode = '';
 let siteAttr = '';
-let description = '';
-let footerURL = '';
-let footerLabel = '';
+let destAttr = '';
+let footerLink = '';
 let hideLogin = true;
 
 export default (page, site, content) => {
-  if (uninitialized) {
+  if (uninited) {
     const { generator: { displayName, version }, title } = site;
+    ({ baseURL } = site);
     generator = `${e(displayName)} ${version}`;
     siteNode = h(title);
     siteAttr = e(title);
-    description = e(site.description);
-    footerURL = e(site.footerURL);
-    footerLabel = h(site.footerLabel);
+    destAttr = e(site.description);
+    footerLink = `<a href="${e(site.footerURL)}">${h(site.footerLabel)}</a>`;
     hideLogin = (site.showLogin !== true);
-    uninitialized = false;
+    uninited = false;
   }
   const { path, title, beforeHeadEnd, beforeBodyEnd } = page;
   const isHome = (path === '/');
@@ -47,22 +49,23 @@ export default (page, site, content) => {
   <link rel="canonical" href="${page.permalink}">
   <meta property="og:title" content="${e(title)}">
   <meta property="og:description" content="${siteAttr}">
-  <meta property="og:image" content="${site.baseURL + page.image}">
-  <meta property="og:image:alt" content="${e(page.message)}">
+  <meta property="og:image" content="${baseURL + page.image}">
+  <meta property="og:image:alt" content="${
+    page.censoredMessage?.reduce(concatSpoiler, '') ?? e(page.message)
+  }">
   <meta property="og:image:width" content="${page.width}">
   <meta property="og:image:height" content="${page.height}">
   <meta name="twitter:card" content="summary_large_image">` :
   (page.canonical !== true) ? '' : `
   <link rel="canonical" href="${page.permalink}">
   <meta property="og:title" content="${isHome ? siteAttr : e(title)}">
-  <meta property="og:description" content="${isHome ? description : siteAttr}">
-  <meta property="og:image" content="${site.baseURL}/icon.png">
+  <meta property="og:description" content="${isHome ? destAttr : siteAttr}">
+  <meta property="og:image" content="${baseURL}/icon.png">
   <meta name="twitter:card" content="summary">`}
   <meta name="generator" content="${generator}">
-  <template id="theme-panel">
-    <label class="label-checkbox"><input id="theme-toggle" type="checkbox"> </label>
-  </template>${(beforeHeadEnd === undefined) ? '' : `
-  ${beforeHeadEnd.toString(2)}`}
+  <template id="theme-panel"><label><input id="theme-toggle" type="checkbox"> </label></template>${
+    beforeHeadEnd ? `
+  ${beforeHeadEnd.toString(2)}` : ''}
 </head>
 <body>
   <header class="header">
@@ -80,10 +83,10 @@ export default (page, site, content) => {
   </main>
   <footer class="footer">
     <address class="content footer-content nav">
-      <a href="${footerURL}">${footerLabel}</a>
+      ${footerLink}
     </address>
-  </footer>${(beforeBodyEnd === undefined) ? '' : `
-  ${beforeBodyEnd.toString(2)}`}
+  </footer>${beforeBodyEnd ? `
+  ${beforeBodyEnd.toString(2)}` : ''}
 </body>
 </html>
 `;

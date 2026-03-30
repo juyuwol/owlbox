@@ -10,9 +10,9 @@ const SUBJECT = '익명 쪽지 도착';
 
 const { env } = process;
 const { maxLength } = site;
-const deactivated = (site.activated !== true) || !('KV_REST_API_URL' in env);
+const activated = (site.activated === true) && ('KV_REST_API_URL' in env);
 
-const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
+const sendEmail = (!activated || (site.notify !== true)) ? null : (() => {
   const { email } = site;
   if (typeof email !== 'string') return null;
 
@@ -25,7 +25,7 @@ const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
   const headers = { 'Content-Type': 'application/json' };
   const base = { subject: SUBJECT, to: email };
   const body = useResend ? 'html': 'htmlBody';
-  const endpoint = useResend ? 'https://api.resend.com/emails' : APPS_SCRIPT_URL;
+  const url = useResend ? 'https://api.resend.com/emails' : APPS_SCRIPT_URL;
 
   const request = useResend ? http : async (url, init, message) => {
     const res = await json(url, init, message);
@@ -39,7 +39,7 @@ const sendEmail = (deactivated || (site.notify !== true)) ? null : (() => {
     base.name = site.title;
   }
 
-  return (post) => request(endpoint, {
+  return (post) => request(url, {
     method: 'POST',
     headers,
     body: JSON.stringify({ [body]: renderEmail(post, SUBJECT), ...base }),
@@ -61,7 +61,7 @@ function respondError(status, headers) {
 
 export const GET = () => respondError(405, { 'allow': 'POST' });
 
-export const POST = deactivated ? (() => respondError(404)) : async (req) => {
+export const POST = activated ? async (req) => {
   const timestamp = Date.now();
   const id = timestamp.toString(36) + '0';
   const post = { id, sent: local(timestamp), ip: ipAddress(req), message: '' };
@@ -93,4 +93,4 @@ export const POST = deactivated ? (() => respondError(404)) : async (req) => {
       'location': '/submit/ok.html',
     },
   });
-};
+} : () => respondError(404);

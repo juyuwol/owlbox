@@ -9,9 +9,13 @@ export default (page, site) => {
   const doConfirm = (label !== undefined);
   if (doConfirm) {
     page.scripts = ['/assets/confirm.js'];
+    page.styles = ['/assets/message.css'];
     page.beforeHeadEnd = prettify(`\
 <template id="confirm-section">
-  <h2 class="post-label">${h(label)}</h2>
+  <div class="post-info">
+    <h2 class="post-label">${h(label)}</h2>
+    <p class="confirm-color"><span id="confirm-icon" class="color-icon"></span></p>
+  </div>
   <pre id="confirm-message" class="post-message"></pre>
 </template>`);
   }

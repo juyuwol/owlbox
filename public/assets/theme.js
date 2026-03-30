@@ -7,11 +7,11 @@
 const html = document.documentElement;
 const media = window.matchMedia('(prefers-color-scheme: dark)');
 
-const initialize = () => {
+const init = () => {
   let theme = null;
   try {
     theme = localStorage.getItem('theme');
-  } catch (e) {}
+  } catch {}
   if (theme) {
     html.setAttribute('data-theme', theme);
   } else {
@@ -19,7 +19,7 @@ const initialize = () => {
   }
 };
 
-initialize();
+init();
 
 customElements.define('theme-panel', class extends HTMLElement {
   connectedCallback() {
@@ -33,6 +33,7 @@ customElements.define('theme-panel', class extends HTMLElement {
       text.data = ' ' + this.getAttribute(`data-${theme}`);
     };
 
+    window.onpageshow = (event) => void (event.persisted && (init(), render()));
     checkbox.onchange = () => {
       if (checkbox.checked) {
         const theme = media.matches ? 'light' : 'dark';
@@ -42,12 +43,6 @@ customElements.define('theme-panel', class extends HTMLElement {
         html.removeAttribute('data-theme');
         localStorage.removeItem('theme');
       }
-    };
-
-    window.onpageshow = (event) => {
-      if (!event.persisted) return;
-      initialize();
-      render();
     };
 
     render();

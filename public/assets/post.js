@@ -1,6 +1,13 @@
 // Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: 0BSD
 
+if (!Element.prototype.replaceChildren) {
+  Element.prototype.replaceChildren = function () {
+    while (this.hasChildNodes()) this.lastChild.remove();
+    this.append(...arguments);
+  };
+}
+
 fetch('index.txt').then(async (res) => {
   const post = location.pathname;
   const id = post.slice(post.lastIndexOf('/') + 1, -5); // '.html'.length: 5
@@ -14,20 +21,40 @@ fetch('index.txt').then(async (res) => {
   link.setAttribute('href', list.slice(0, list.lastIndexOf('/') + 1) + `${page}.html`);
 }).catch(() => {});
 
-const image = document.createElement('img');
-const checkbox = document.getElementById('image-toggle');
+const spoilers = document.querySelectorAll('[data-spoiler]');
 const message = document.querySelector('.post-message');
-checkbox.disabled = false;
-checkbox.onchange = () => {
-  if (!checkbox.checked) return image.replaceWith(message);
-  const { head } = document;
-  image.alt = message.textContent;
-  image.src = head.querySelector('meta[property="og:image"]').content;
-  image.setAttribute('width', head.querySelector('meta[property="og:image:width"]').content);
-  image.setAttribute('height', head.querySelector('meta[property="og:image:height"]').content);
-  message.replaceWith(image);
-  checkbox.onchange = () => (checkbox.checked ?
-    message.replaceWith(image) :
-    image.replaceWith(message)
-  );
+const form = document.getElementById('post-setting');
+const { view } = form.elements;
+let ref = message, img;
+
+form.onchange = () => {
+  const { value } = view;
+  if (value === 'image') {
+    if (!img) {
+      img = document.createElement('img');
+      img.src = document.querySelector('meta[property="og:image"]').content;
+      img.alt = document.querySelector('meta[property="og:image:alt"]').content;
+      img.setAttribute('width', document.querySelector('meta[property="og:image:width"]').content);
+      img.setAttribute('height', document.querySelector('meta[property="og:image:height"]').content);
+    }
+    ref.replaceWith(img);
+    ref = img;
+  } else if (value === 'origin') {
+    if (spoilers) for (const e of spoilers) {
+      e.replaceChildren(e.getAttribute('data-spoiler'));
+    }
+    ref.replaceWith(message);
+    ref = message;
+  } else if (value === 'censored') {
+    if (spoilers) for (const e of spoilers) {
+      e.replaceChildren();
+    }
+    if (ref === message) return;
+    ref.replaceWith(message);
+    ref = message;
+  }
 };
+
+if (view.value !== view[0].value) {
+  form.onchange();
+}
