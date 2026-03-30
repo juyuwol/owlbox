@@ -7,7 +7,7 @@
   "author": "Ju Yuwol <ju@yuwol.pe.kr>",
   "type": "module",
   "dependencies": {
-    "@vercel/functions": "^3.1.4",
-    "canvaskit-wasm": "0.40.0"
+    "@vercel/functions": "^3.4.3",
+    "canvaskit-wasm": "^0.41.0"
   }
 }
