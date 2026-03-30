@@ -14,12 +14,12 @@ const activated = (site.activated === true) && ('KV_REST_API_URL' in env);
 
 const sendEmail = (!activated || (site.notify !== true)) ? null : (() => {
   const { email } = site;
-  if (typeof email !== 'string') return null;
-
   const { RESEND_API_KEY, RESEND_DOMAIN, APPS_SCRIPT_URL } = env;
-  const unavailableGoogle = (APPS_SCRIPT_URL === undefined);
-  const unavailableResend = (RESEND_API_KEY === undefined) || (RESEND_DOMAIN === undefined);
-  if (unavailableGoogle && unavailableResend) return null;
+  const unavailableGoogle = !APPS_SCRIPT_URL;
+  if (
+    (typeof email !== 'string') ||
+    (unavailableGoogle && (!RESEND_API_KEY || !RESEND_DOMAIN))
+  ) return null;
 
   const useResend = unavailableGoogle || (site.preferredSender === 'resend');
   const headers = { 'Content-Type': 'application/json' };
