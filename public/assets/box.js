@@ -3,6 +3,29 @@
 
 import { handleError } from './error.js';
 
+if (!Element.prototype.replaceChildren) {
+  Element.prototype.replaceChildren = function () {
+    while (this.hasChildNodes()) this.lastChild.remove();
+    this.append(...arguments);
+  };
+}
+
+const dropTakeMap = (
+  Iterator.prototype.map ? (values, start, size, mapper) => {
+    values = values.drop(start).take(size);
+    return mapper ? values.map(mapper) : values;
+  } :
+  function* (values, start, size, mapper = (e) => e) {
+    if (start > 0) for (const _ of values) {
+      if (--start === 0) break;
+    }
+    if (size > 0) for (const value of values) {
+      yield mapper(value);
+      if (--size === 0) break;
+    }
+  }
+);
+
 const controllers = new (class AbortControllerSet extends Set {
   abort() {
     for (const e of this) e.abort();
@@ -253,8 +276,8 @@ const createItem = {
 document.addEventListener('box-render', () => {
   let items = itemsByPage.get(page);
   if (items === undefined) {
-    items = dataset.values().drop((page - 1) * perPage).take(perPage);
-    if (!selected) items = items.map(createItem[tab]);
+    const mapper = selected ? undefined : createItem[tab];
+    items = dropTakeMap(dataset.values(), (page - 1) * perPage, perPage, mapper);
   }
   list.replaceChildren(...items);
   statusbar.setAttribute('tabindex', '-1');
