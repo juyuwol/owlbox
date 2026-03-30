@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 import {
   INDEX_CARD, createCard, fontMap, generatorElements,
   generatorForm, getStyle, promise, updateOutput,

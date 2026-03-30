@@ -1,3 +1,6 @@
+// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 const INDEX_COLORS = 0;
 const INDEX_CARD = 1;
 

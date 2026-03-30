@@ -1,3 +1,6 @@
+// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// SPDX-License-Identifier: Zlib
+
 const WIDTH      = 900; // Max side value of Twitter card
 const MIN_HEIGHT = 472; // 52.356% (Twitter card's ratio) of 900px
 
@@ -29,6 +32,7 @@ export class ImageBuilder {
         heightMultiplier: lineHeight,
       },
     });
+
     if ((horizontalFrameThickness > 0) || (verticalFrameThickness > 0)) {
       const { frameLeft, frameTop } = style;
       const hasFrameMargin = (frameLeft > 0) || (frameTop > 0);
@@ -83,7 +87,7 @@ export class ImageBuilder {
       canvas.drawRect4f(left, top, right, bottom, backgroundPaint);
     }
 
-    const top = (height === MIN_HEIGHT) ? ((height - contentHeight) / 2) : minContentTop;
+    const top = (height > MIN_HEIGHT) ? minContentTop : ((height - contentHeight) / 2);
     canvas.drawParagraph(content, contentLeft, top);
 
     const image = surface.makeImageSnapshot();

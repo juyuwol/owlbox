@@ -1,10 +1,10 @@
 /**
- * canvaskit-wasm https://www.npmjs.com/package/canvaskit-wasm
+ * canvaskit-wasm 0.41.0 https://www.npmjs.com/package/canvaskit-wasm
  *
- * @version 0.40.0
- * @license BSD-3-Clause (also applies to the file at './canvaskit.wasm')
+ * NOTICE: The following license also applies to the './canvaskit.wasm' file.
  *
- * Copyright (c) 2011 Google Inc. All rights reserved.
+ * Copyright 2011 Google Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
