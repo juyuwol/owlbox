@@ -3,7 +3,7 @@
  *
  * NOTICE: The following license also applies to the './canvaskit.wasm' file.
  *
- * Copyright 2011 Google Inc. All rights reserved.
+ * (c) 2011 Google Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * Redistribution and use in source and binary forms, with or without
