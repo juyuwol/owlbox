@@ -44,16 +44,16 @@ const validators = (
 );
 
 export async function POST(req) {
-  const updates = {};
+  let updates;
   try {
-    const body = await req.json();
-    if (body?.constructor !== Object) {
+    updates = await req.json();
+    if (updates?.constructor !== Object) {
       throw new TypeError('Request body must be a JSON object.');
     }
-    for (const key in body) {
-      const value = body[key];
+    for (const key in updates) {
       const validator = validators.get(key);
-      updates[key] = validator ? validator(value) : value;
+      if (validator === undefined) continue;
+      updates[key] = validator(updates[key]);
     }
   } catch (error) {
     return respondError(400, error.message);

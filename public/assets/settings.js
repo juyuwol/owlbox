@@ -5,27 +5,22 @@ import { handleError } from './error.js';
 
 const form = document.getElementById('settings');
 const submitButton = form.querySelector('[type=submit]');
+const defaults = serialize(form, {});
 
-form.onsubmit = async function submit(event) {
-  event.preventDefault();
-  form.onsubmit = (event) => event.preventDefault();
-  submitButton.disabled = true;
-  const { elements } = form;
-  const data = {};
-  for (let i = elements.length - 1; i >= 0; --i) {
-    const element = elements[i];
-    if (element.disabled) continue;
-    const { name } = element;
-    const schema = element.getAttribute('data-type');
-    if (schema === 'boolean') {
-      data[name] = element.checked;
-    } else if (schema === 'number') {
-      data[name] = element.valueAsNumber;
-    } else {
-      data[name] = element.value;
-    }
+form.onchange = (event) => {
+  const { target } = event;
+  if (valueOf(target) !== defaults[target.name]) {
+    submitButton.disabled = false;
+  } else if (serialize(form, defaults) === null) {
+    submitButton.disabled = true;
   }
+};
+
+form.onsubmit = async (event) => {
+  event.preventDefault();
+  submitButton.disabled = true;
   try {
+    const data = serialize(form, defaults);
     await fetch(form.action, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -33,12 +28,41 @@ form.onsubmit = async function submit(event) {
       credentials: 'include',
     }).then(handleError);
     window.alert(form.getAttribute('data-ok'));
+    Object.assign(defaults, data);
   } catch (error) {
-    window.alert(error.message);
-  } finally {
-    form.onsubmit = submit;
     submitButton.disabled = false;
+    window.alert(error.message);
   }
 };
 
-submitButton.disabled = false;
+function serialize(form, defaults) {
+  const { elements, length } = form;
+  const data = {};
+  const names = new Set();
+  for (let i = 0; i < length; ++i) {
+    const element = elements[i];
+    if (element.disabled) continue;
+    const { name } = element;
+    if (!name || names.has(name)) continue;
+    const value = valueOf(element);
+    if ((value === undefined) || (value === defaults[name])) continue;
+    data[name] = value;
+    names.add(name);
+  }
+  return (names.size > 0) ? data : null;
+}
+
+function valueOf(element) {
+  if (element instanceof HTMLInputElement) switch (element.type) {
+    case 'number': {
+      const value = element.valueAsNumber;
+      if (Number.isNaN(value)) return; // Ignore NaN
+      return value;
+    }
+    case 'checkbox': // Treat checkboxes that have no value as booleans
+      if (!element.hasAttribute('value')) return element.checked;
+    case 'radio': // Ignore unchecked checkboxes and radio buttons
+      if (!element.checked) return;
+  }
+  return element.value;
+}

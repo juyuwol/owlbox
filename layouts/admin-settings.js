@@ -18,7 +18,7 @@ data-ok="설정을 변경했습니다. 적용되기까지 다소 시간이 걸�
   <ul class="settings-list">
     <li class="settings-item"><label><input name="activated" type="checkbox"${
       (site.activated === true) ? ' checked=""' : ''
-    } data-type="boolean" aria-describedby="activated-description"> 쪽지 받기</label><br>
+    } aria-describedby="activated-description"> 쪽지 받기</label><br>
     <span id="activated-description" class="admin-description">${storable ? '\
 비활성화해도 기존의 쪽지/답장은 비공개되지 않으며, \
 이미 받은 쪽지에 답장하거나 기존 답장을 수정할 수 있습니다.' : '\
@@ -26,8 +26,7 @@ data-ok="설정을 변경했습니다. 적용되기까지 다소 시간이 걸�
 활성 상태로 설정해도 무시됩니다.'}</span></li>
     <li class="settings-item"><label><input name="notify" type="checkbox"${
       (site.notify === true) ? ' checked=""' : ''
-    } data-type="boolean"${
-      sendable ? '' : ' aria-describedby="notify-description"'
+    }${sendable ? '' : ' aria-describedby="notify-description"'
     }> 이메일 알림 받기</label>${sendable ? '' : `<br>
     <span id="notify-description" class="admin-description">\
 프로젝트에 이메일 발송을 위한 환경 변수를 설정하지 않거나, \
@@ -46,12 +45,12 @@ aria-describedby="title-description"></label><br>
     <li class="settings-item"><label class="settings-label">\
 쪽지의 최대 글자 수: <input class="settings-input" name="maxLength" \
 type="number" value="${site.maxLength
-}" required="" min="1" max="1000" data-type="number">\
+}" required="" min="1" max="1000">\
 </label></li>
     <li class="settings-item"><label class="settings-label">\
 목록의 최대 표시 수: <input class="settings-input" name="perPage" \
 type="number" value="${site.perPage
-}" required="" min="1" max="32767" data-type="number">\
+}" required="" min="1" max="32767">\
 </label></li>
     <li class="settings-item"><label class="settings-label">\
 기준 시간대: <input class="settings-input" name="timeOffset" type="text" \
@@ -93,7 +92,7 @@ describedby="about-description">${h(site.about)}</textarea></label><br>
     <li class="settings-item"><label>\
 <input name="showLogin" type="checkbox"${
   (site.showLogin === true) ? ' checked=""' : ''
-} data-type="boolean" aria-describedby="show-login-description"> \
+} aria-describedby="show-login-description"> \
 로그인 메뉴 보이기</label><br>
     <span id="show-login-description" class="admin-description">\
 상단 메뉴(헤더)에 관리 패널로 이동하는 링크를 노출시킵니다. \
