@@ -62,18 +62,18 @@ export default (page, site, content) => {
   <meta property="og:description" content="${isHome ? destAttr : siteAttr}">
   <meta property="og:image" content="${baseURL}/icon.png">
   <meta name="twitter:card" content="summary">`}
-  <meta name="generator" content="${generator}">
-  <template id="theme-panel"><label><input id="theme-toggle" type="checkbox"> </label></template>${
-    beforeHeadEnd ? `
+  <meta name="generator" content="${generator}">${hideLogin ? `
+  <template id="theme-panel"><label><input id="theme-toggle" type="checkbox"> \
+</label></template>` : ''}${beforeHeadEnd ? `
   ${beforeHeadEnd.toString(2)}` : ''}
 </head>
 <body>
   <header class="header">
     <div class="content header-content nav">
-      <${titleTag} class="site-title"><a href="/">${siteNode}</a></${titleTag}>
-      ${(hideLogin || (path?.startsWith('box/', 1) === true)) ? `\
-<theme-panel data-dark="어둡게" data-light="밝게"></theme-panel>` : `\
-<p class="login"><a href="/box/">로그인</a></p>`}
+      <${titleTag} class="site-title"><a href="/">${siteNode}</a></${titleTag}>${hideLogin ? `
+      <theme-panel data-dark="어둡게" data-light="밝게"></theme-panel>` :
+      path?.startsWith('box/', 1) ? '' : `
+      <p class="login"><a href="/box/">로그인</a></p>`}
     </div>
   </header>
   <main class="main">
