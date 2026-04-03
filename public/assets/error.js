@@ -1,7 +1,7 @@
 // Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: 0BSD
 
-export async function handleError(res) {
+export async function throwIfHttpError(res) {
   if (res.ok) return res;
   let message = `HTTP ${res.status}`;
   if (res.headers.get('content-type') === 'application/problem+json') {

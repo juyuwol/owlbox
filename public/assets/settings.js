@@ -1,7 +1,7 @@
 // Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: 0BSD
 
-import { handleError } from './error.js';
+import { throwIfHttpError } from './error.js';
 
 const form = document.getElementById('settings');
 const submitButton = form.querySelector('[type=submit]');
@@ -26,7 +26,7 @@ form.onsubmit = async (event) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
       credentials: 'include',
-    }).then(handleError);
+    }).then(throwIfHttpError);
     window.alert(form.getAttribute('data-ok'));
     Object.assign(defaults, data);
   } catch (error) {

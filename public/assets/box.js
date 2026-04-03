@@ -1,7 +1,7 @@
 // Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: Zlib
 
-import { handleError } from './error.js';
+import { throwIfHttpError } from './error.js';
 
 if (!Element.prototype.replaceChildren) {
   Element.prototype.replaceChildren = function () {
@@ -125,7 +125,7 @@ const createUnrepliedItem = (() => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(post),
         credentials: 'include',
-      }).then(handleError);
+      }).then(throwIfHttpError);
       const blob = await res.blob();
       controller.signal.throwIfAborted();
       const url = URL.createObjectURL(blob);
@@ -243,7 +243,7 @@ const createRepliedItem = (() => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(post),
         credentials: 'include',
-      }).then(handleError);
+      }).then(throwIfHttpError);
       controller.signal.throwIfAborted();
       post.replied = toLocalDateTime(headers.get('last-modified'));
     } catch (error) {
@@ -342,7 +342,7 @@ deleteButton.onclick = () => (selected ? deleteSelected : renderSelected)();
     const res = await fetch(`${tab}.json`, {
       credentials: 'include',
       signal,
-    }).then(handleError);
+    }).then(throwIfHttpError);
     const data = await res.json();
     signal.throwIfAborted();
     for (const post of data) {
@@ -467,7 +467,7 @@ async function deleteSelected() {
     await fetch(`${tab}?id=${ids.join('&id=')}`, { // No need to escape id
       method: 'DELETE',
       credentials: 'include',
-    }).then(handleError);
+    }).then(throwIfHttpError);
     controller.signal.throwIfAborted();
   } catch (error) {
     if (error.name === 'AbortError') return;
