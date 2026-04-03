@@ -1,6 +1,6 @@
 // canvaskit-wasm 0.41.0 https://www.npmjs.com/package/canvaskit-wasm
 // (c) 2011 Google Inc. All rights reserved.
-// SPDX-License-Identifier: LicenseRef-BSD-3-Clause-Google
+// SPDX-License-Identifier: BSD-3-Clause
 export default await (async function() {
 var u={},da,ha,ka=new Promise((a,b)=>{da=a;ha=b});
 (function(a){a.Pd=a.Pd||[];a.Pd.push(function(){a.MakeSWCanvasSurface=function(b){var d=b,f="undefined"!==typeof OffscreenCanvas&&d instanceof OffscreenCanvas;if(!("undefined"!==typeof HTMLCanvasElement&&d instanceof HTMLCanvasElement||f||(d=document.getElementById(b),d)))throw"Canvas with id "+b+" was not found";if(b=a.MakeSurface(d.width,d.height))b.Hd=d;return b};a.MakeCanvasSurface||(a.MakeCanvasSurface=a.MakeSWCanvasSurface);a.MakeSurface=function(b,d){var f={width:b,height:d,colorType:a.ColorType.RGBA_8888,
