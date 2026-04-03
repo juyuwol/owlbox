@@ -5,6 +5,8 @@ SPDX-License-Identifier: CC0-1.0
 
 # 부엉이 사서함 — OwlBox
 
+![트윗 공유 스크린샷](docs/images/tweet.png)
+
 나만의 익명 쪽지함 겸 답장 게시판을 만들어 보세요.
 
 - 받은 쪽지의 내용을 ([스핀스핀](https://spin-spin.com/), [페잉](https://peing.net/) 외 동종 서비스들처럼) 이미지 섬네일로 공유할 수 있습니다.
@@ -23,9 +25,9 @@ SPDX-License-Identifier: CC0-1.0
 
 ## 미리 보기
 
-| 답장 작성 | 발행 | 트윗 공유 |
-| --- | --- | --- |
-| ![작성 스크린샷](docs/images/box.png) | ![발행 스크린샷](docs/images/box-published.png) | ![트윗 스크린샷](docs/images/tweet.png) |
+| 답장 작성 | 발행 |
+| --- | --- |
+| ![작성 스크린샷](docs/images/box.png) | ![발행 스크린샷](docs/images/box-published.png) |
 
 아래의 데모 사이트에서 쪽지 보내기, 답장 작성·수정·삭제, 설정 변경 등 실사용 시의 동작을 자유롭게 체험할 수 있습니다.
 
@@ -54,7 +56,7 @@ SPDX-License-Identifier: CC0-1.0
 
 기본적으로 [zlib 라이선스](LICENSE.txt)를 따릅니다. 일부 코드에는 [BSD Zero Clause 라이선스](LICENSES/0BSD.txt)가 적용됩니다. 각 소스 파일 상단의 주석에서 해당 파일의 라이선스 정보를 확인할 수 있습니다.
 
-글꼴 파일의 저작권은 파일명에 '.license'가 덧붙은 인접 파일을 통해 고지됩니다. 별도의 언급이 없다면 소프트웨어가 아닌 파일에는 [CC0 1.0 라이선스](https://creativecommons.org/publicdomain/zero/1.0/)가 적용됩니다.
+포함된 글꼴 소프트웨어의 저작권은 파일명에 '.license'가 덧붙은 인접 파일을 통해 고지됩니다. 별도의 언급이 없다면 소프트웨어가 아닌 파일에는 [CC0 1.0 라이선스](https://creativecommons.org/publicdomain/zero/1.0/)가 적용됩니다.
 
 모든 라이선스의 전문은 [LICENSES 디렉토리](LICENSES/)에 있습니다.
 
