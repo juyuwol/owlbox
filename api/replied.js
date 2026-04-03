@@ -92,7 +92,7 @@ export async function POST(req) {
     if ((typeof id !== 'string') || !ID_CHARS.test(id)) {
       throw new Error('Invalid "id" value.');
     } else if (typeof reply !== 'string') {
-      throw new Error('"reply" must be a string.');
+      throw new TypeError('"reply" must be a string.');
     }
   } catch (error) {
     return respondError(400, error.message);
