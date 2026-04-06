@@ -11,7 +11,7 @@ export default (page, site) => {
   const availableResend = ('RESEND_API_KEY' in env) && ('RESEND_DOMAIN' in env);
   const sendable = (availableGoogle || availableResend) && (typeof email === 'string');
   const storable = ('KV_REST_API_URL' in env);
-  page.scriptsModule = ['/assets/error.js', '/assets/settings.js'];
+  page.scriptsModule = ['/assets/util.js', '/assets/settings.js'];
   return render(page, site, prettify(`\
 <form id="settings" action="/box/config" method="post" autocomplete="off" \
 data-ok="설정을 변경했습니다. 적용되기까지 다소 시간이 걸릴 수 있습니다.">

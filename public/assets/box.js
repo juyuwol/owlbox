@@ -1,7 +1,7 @@
 // Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: Zlib
 
-import { throwIfHttpError } from './error.js';
+import { throwIfHttpError } from './util.js';
 
 if (!Element.prototype.replaceChildren) {
   Element.prototype.replaceChildren = function () {

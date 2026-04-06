@@ -1,7 +1,7 @@
 // Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: 0BSD
 
-import { throwIfHttpError } from './error.js';
+import { throwIfHttpError } from './util.js';
 
 const form = document.getElementById('settings');
 const submitButton = form.querySelector('[type=submit]');

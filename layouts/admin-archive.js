@@ -5,7 +5,7 @@ import render from './admin.js';
 import { prettify } from './util.js';
 
 export default (page, site) => {
-  page.scriptsModule = ['/assets/error.js', '/assets/archive.js'];
+  page.scriptsModule = ['/assets/util.js', '/assets/archive.js'];
   return render(page, site, prettify(`\
 <p>데이터베이스에서 답장을 기다리는 쪽지의 목록을 내려받거나, 현재 목록에 추가할 수 있습니다.</p>
 <p>(이미 답장을 한 쪽지의 경우 연결된 GitHub 리포지토리에 기록되어 있습니다.)</p>

@@ -8,7 +8,7 @@ import { prettify } from './util.js';
 export default (page, site) => {
   const dot3 = '<span class="dot">.</span>'.repeat(3);
   const storable = ('KV_REST_API_URL' in process.env);
-  page.scriptsModule = ['/assets/error.js', '/assets/box.js'];
+  page.scriptsModule = ['/assets/util.js', '/assets/box.js'];
   page.beforeBodyEnd = prettify(`\
 <script id="box-config" type="application/json">
   ${JSON.stringify({
