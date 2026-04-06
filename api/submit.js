@@ -75,7 +75,7 @@ export const POST = activated ? async (req) => {
     const spoiler = form.get('spoiler');
     if (color) post.color = color;
     if (spoiler) post.spoiler = true;
-  } catch (e) {
+  } catch {
     return respondError(400);
   }
   try { // No need to escape id
