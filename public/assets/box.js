@@ -1,7 +1,7 @@
 // Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: Zlib
 
-import { throwIfHttpError } from './util.js';
+import { lockForm, unlockForm, throwIfHttpError } from './util.js';
 
 if (!Element.prototype.replaceChildren) {
   Element.prototype.replaceChildren = function () {
@@ -101,9 +101,11 @@ const createUnrepliedItem = (() => {
 
   async function publishPost(event) {
     event.preventDefault();
-    if (!window.confirm(unrepliedConfirm)) return;
 
     const form = event.currentTarget;
+    if (form.hasAttribute('data-locked')) return;
+    if (!window.confirm(unrepliedConfirm)) return;
+
     const messagebox = form.elements.message;
     if (messagebox.textLength > 1000) {
       messagebox.maxLength = 1000;
@@ -118,7 +120,7 @@ const createUnrepliedItem = (() => {
 
     const controller = controllers.create();
     const locked = lockForm(form);
-    form.onsubmit = (event) => event.preventDefault();
+    form.setAttribute('data-locked', '');
     try {
       const res = await fetch(form.action, {
         method: 'POST',
@@ -134,7 +136,7 @@ const createUnrepliedItem = (() => {
       objectURLs.push(url);
     } catch (error) {
       if (error.name === 'AbortError') return;
-      form.onsubmit = publishPost;
+      form.removeAttribute('data-locked');
       unlockForm(locked);
       window.alert(error.message);
       return;
@@ -230,13 +232,14 @@ const createRepliedItem = (() => {
 
   async function updatePost(event) {
     event.preventDefault();
+    const form = event.currentTarget;
+    if (form.hasAttribute('data-locked')) return;
     if (!window.confirm(repliedConfirm)) return;
     let aborted = false;
-    const form = event.currentTarget;
     const post = Object.fromEntries(new FormData(form));
     const controller = controllers.create();
     const locked = lockForm(form);
-    form.onsubmit = (event) => event.preventDefault();
+    form.setAttribute('data-locked', '');
     try {
       const { headers } = await fetch(form.action, {
         method: 'POST',
@@ -253,7 +256,7 @@ const createRepliedItem = (() => {
     } finally {
       controllers.delete(controller);
       if (!aborted) {
-        form.onsubmit = updatePost;
+        form.removeAttribute('data-locked');
         unlockForm(locked);
       }
     }
@@ -364,45 +367,6 @@ deleteButton.onclick = () => (selected ? deleteSelected : renderSelected)();
   renderTab();
   loadingbar.replaceWith(tabpanel);
 })();
-
-function lockForm(form) {
-  const { elements } = form;
-  const locked = [];
-  for (let i = elements.length - 1; i >= 0; --i) {
-    const e = elements[i];
-    if (e.disabled || e.readOnly) continue;
-    if (e.matches(':read-write')) {
-      e.readOnly = true;
-      locked.push(e);
-    } else if (e instanceof HTMLSelectElement) {
-      // Disable all options except the selected one;
-      // pre-decrement (--i) skips the selected index (ex).
-      const { options, selectedIndex: ex } = e;
-      const disable = (e) => {
-        if (e.disabled) return;
-        e.disabled = true;
-        locked.push(e);
-      };
-      let i = options.length;
-      for (--i; i > ex; --i) disable(options[i]);
-      for (--i; i >= 0; --i) disable(options[i]);
-    } else {
-      e.disabled = true;
-      locked.push(e);
-    }
-  }
-  return locked;
-}
-
-function unlockForm(locked) {
-  for (const e of locked) {
-    if (e.readOnly) {
-      e.readOnly = false;
-    } else {
-      e.disabled = false;
-    }
-  }
-}
 
 function toggleSelection(event) {
   const { checked, form } = event.currentTarget;

@@ -1,7 +1,7 @@
 // Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: 0BSD
 
-import { throwIfHttpError } from './util.js';
+import { lockForm, unlockForm, throwIfHttpError } from './util.js';
 
 const form = document.getElementById('settings');
 const submitButton = form.querySelector('[type=submit]');
@@ -18,9 +18,13 @@ form.onchange = (event) => {
 
 form.onsubmit = async (event) => {
   event.preventDefault();
+  if (form.hasAttribute('data-locked')) return;
+  const data = serialize(form, defaults);
   submitButton.disabled = true;
+  if (data === null) return;
+  const locked = lockForm(form);
+  form.setAttribute('data-locked', '');
   try {
-    const data = serialize(form, defaults);
     await fetch(form.action, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -32,6 +36,9 @@ form.onsubmit = async (event) => {
   } catch (error) {
     submitButton.disabled = false;
     window.alert(error.message);
+  } finally {
+    form.removeAttribute('data-locked');
+    unlockForm(locked);
   }
 };
 
