@@ -425,10 +425,13 @@ function renderSelected() {
 async function deleteSelected() {
   if (!window.confirm(deleteConfirm)) return;
   deleteButton.disabled = true;
-  const ids = [...selectedItems.keys()];
   const controller = controllers.create();
+  const params = new URLSearchParams();
+  for (const id of selectedItems.keys()) {
+    params.append('id', id);
+  }
   try {
-    await fetch(`${tab}?id=${ids.join('&id=')}`, { // No need to escape id
+    await fetch(`${tab}?${params}`, {
       method: 'DELETE',
       credentials: 'include',
     }).then(throwIfHttpError);
@@ -441,7 +444,9 @@ async function deleteSelected() {
   } finally {
     controllers.delete(controller);
   }
-  for (const e of ids) posts.delete(e);
+  for (const id of selectedItems.keys()) {
+    posts.delete(id);
+  }
   selectedItems.clear();
   renderTab();
   window.alert(deleteOK);
