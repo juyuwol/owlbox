@@ -23,7 +23,6 @@ form.onsubmit = async (event) => {
     await fetch(form.action, {
       method: 'PUT',
       body: files[0],
-      credentials: 'include',
     }).then(throwIfHttpError);
     window.alert(form.getAttribute('data-ok'));
   } catch (error) {

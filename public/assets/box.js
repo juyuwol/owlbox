@@ -126,7 +126,6 @@ const createUnrepliedItem = (() => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(post),
-        credentials: 'include',
       }).then(throwIfHttpError);
       const blob = await res.blob();
       controller.signal.throwIfAborted();
@@ -245,7 +244,6 @@ const createRepliedItem = (() => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(post),
-        credentials: 'include',
       }).then(throwIfHttpError);
       controller.signal.throwIfAborted();
       post.replied = toLocalDateTime(headers.get('last-modified'));
@@ -342,10 +340,7 @@ deleteButton.onclick = () => (selected ? deleteSelected : renderSelected)();
   tab = tabs.value;
   try {
     const { signal } = controller;
-    const res = await fetch(`${tab}.json`, {
-      credentials: 'include',
-      signal,
-    }).then(throwIfHttpError);
+    const res = await fetch(`${tab}.json`, { signal }).then(throwIfHttpError);
     const data = await res.json();
     signal.throwIfAborted();
     for (const post of data) {
@@ -431,10 +426,7 @@ async function deleteSelected() {
     params.append('id', id);
   }
   try {
-    await fetch(`${tab}?${params}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    }).then(throwIfHttpError);
+    await fetch(`${tab}?${params}`, { method: 'DELETE' }).then(throwIfHttpError);
     controller.signal.throwIfAborted();
   } catch (error) {
     if (error.name === 'AbortError') return;

@@ -29,7 +29,6 @@ form.onsubmit = async (event) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-      credentials: 'include',
     }).then(throwIfHttpError);
     window.alert(form.getAttribute('data-ok'));
     Object.assign(defaults, data);
