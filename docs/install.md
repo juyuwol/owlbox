@@ -1,7 +1,5 @@
-<!--
-Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
-SPDX-License-Identifier: CC0-1.0
--->
+<!-- © 2025 주유월 <ju@yuwol.pe.kr> -->
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 
 # 설치 안내
 
@@ -89,7 +87,7 @@ SPDX-License-Identifier: CC0-1.0
 3. *Code.gs* 스크립트의 모든 내용을 지우고, 아래의 코드로 대체합니다.
 
    ``` javascript
-   // Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+   // © 2025 주유월 <ju@yuwol.pe.kr>
    // SPDX-License-Identifier: 0BSD
 
    // https://developers.google.com/apps-script/guides/web

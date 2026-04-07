@@ -1,6 +1,6 @@
 zlib License
 
-Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+© 2025 주유월 <ju@yuwol.pe.kr>
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages

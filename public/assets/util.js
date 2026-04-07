@@ -1,4 +1,4 @@
-// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// © 2025 주유월 <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: 0BSD
 
 export function lockForm(form) {

@@ -1,4 +1,4 @@
-// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// © 2023 주유월 <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: 0BSD
 
 import { escapeElement as e, escapeHTML as h } from './util.js';

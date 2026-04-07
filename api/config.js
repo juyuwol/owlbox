@@ -1,4 +1,4 @@
-// Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
+// © 2025 주유월 <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: Zlib
 
 import { respondError, updateJSON } from '../src/vercel.js';

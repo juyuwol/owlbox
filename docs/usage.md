@@ -1,7 +1,5 @@
-<!--
-Copyright 2025 Ju Yuwol <ju@yuwol.pe.kr>
-SPDX-License-Identifier: CC0-1.0
--->
+<!-- © 2025 주유월 <ju@yuwol.pe.kr> -->
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 
 # 사용 안내
 

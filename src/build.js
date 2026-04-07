@@ -1,4 +1,4 @@
-// Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
+// © 2023 주유월 <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: Zlib
 
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';

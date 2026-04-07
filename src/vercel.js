@@ -1,4 +1,4 @@
-// Copyright 2024 Ju Yuwol <ju@yuwol.pe.kr>
+// © 2024 주유월 <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: Zlib
 
 import site from '../config.js';
