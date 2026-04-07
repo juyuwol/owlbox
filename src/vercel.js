@@ -47,8 +47,8 @@ export function json(url, init, message) {
 
 export async function kv(command, message) {
   const res = await http(env.KV_REST_API_URL, {
-    method: 'POST',
     headers: { Authorization: `Bearer ${env.KV_REST_API_TOKEN}` },
+    method: 'POST',
     body: command,
   }, message, true);
   if ('error' in res) {
@@ -81,7 +81,6 @@ export async function updateJSON(path, updates, message, updater) {
   // https://docs.github.com/en/rest/repos/contents?apiVersion=2026-03-10#get-repository-content
   const params = new URLSearchParams({ ref: branch });
   const { sha, content } = await json(`${url}?${params}`, {
-    method: 'GET',
     headers,
   }, 'Failed to get the file.');
 
@@ -92,8 +91,8 @@ export async function updateJSON(path, updates, message, updater) {
   // https://docs.github.com/en/rest/repos/contents?apiVersion=2026-03-10#create-or-update-file-contents
   const text = JSON.stringify(data, undefined, 2) + '\n';
   await http(url, {
-    method: 'PUT',
     headers,
+    method: 'PUT',
     body: JSON.stringify({
       content: Buffer.from(text).toString('base64'),
       message,

@@ -8,10 +8,9 @@ import site from '../config.js';
 const { suffix, timeOffset } = site;
 
 const isInvalidId = (id) => !ID_CHARS.test(id);
-const concatTreeEntries = (entries, id) => `${entries
-},{"mode":"100644","type":"blob","sha":null,"path":"data/unproxied/${id
-}.json"},{"mode":"100644","type":"blob","sha":null,"path":"public/images${suffix
-}/${id}.png"}`;
+const concatTreeEntries = (text, id) => `${text},{"path":"data/unproxied/${id
+}.json","mode":"100644","type":"blob","sha":null},{"path":"public/images${suffix
+}/${id}.png","mode":"100644","type":"blob","sha":null}`;
 
 function updatePost(post, updates) {
   const { sent, spoiler = false } = Object.assign(post, updates);
@@ -44,15 +43,14 @@ export async function DELETE(req) {
       commit: { tree: { sha: baseTree } },
       sha: parent,
     } = await json(`${baseURL}/commits/${ref}`, {
-      method: 'GET',
       headers,
     }, 'Failed to get the last commit.');
 
     // Create a tree to edit the content of the repository
     // https://docs.github.com/en/rest/git/trees?apiVersion=2026-03-10#create-a-tree
     const { sha: tree } = await json(`${baseURL}/git/trees`, {
-      method: 'POST',
       headers,
+      method: 'POST',
       body: `{"tree":[${ids.reduce(concatTreeEntries, '').slice(1)
       }],"base_tree":"${baseTree}"}`, // No need to escape sha
     }, 'Failed to create a tree.');
@@ -60,8 +58,8 @@ export async function DELETE(req) {
     // Create a commit that uses the tree created above
     // https://docs.github.com/en/rest/git/commits?apiVersion=2026-03-10#create-a-commit
     const { sha } = await json(`${baseURL}/git/commits`, {
-      method: 'POST',
       headers,
+      method: 'POST',
       body: `{"message":"Delete ${ids.join(', ')}"},"tree":"${tree
       }","parents":["${parent}"]}`, // No need to escape id and sha
     }, 'Failed to create a commit.');
@@ -69,8 +67,8 @@ export async function DELETE(req) {
     // Make the current branch point to the created commit
     // https://docs.github.com/en/rest/git/refs?apiVersion=2026-03-10#update-a-reference
     await http(`${baseURL}/git/refs/${ref}`, {
-      method: 'PATCH',
       headers,
+      method: 'PATCH',
       body: `{"sha":"${sha}"}`, // No need to escape sha
     }, 'Failed to update the ref.');
   } catch (error) {

@@ -68,15 +68,14 @@ export async function POST(req) {
       // Get the contents of the last commit
       // https://docs.github.com/en/rest/commits/commits?apiVersion=2026-03-10#get-a-commit
       json(`${baseURL}/commits/${ref}`, {
-        method: 'GET',
         headers,
       }, 'Failed to get the last commit.'),
 
       // Create a blob of the image
       // https://docs.github.com/en/rest/git/blobs?apiVersion=2026-03-10#create-a-blob
       json(`${baseURL}/git/blobs`, {
-        method: 'POST',
-        headers, // No need to escape a base64-encoded string
+        headers,
+        method: 'POST', // No need to escape a base64-encoded string
         body: `{"content":"${Buffer.from(image).toString('base64')}","encoding":"base64"}`,
       }, 'Failed to create a blob of the image.'),
     ]);
@@ -84,8 +83,8 @@ export async function POST(req) {
     // Create a tree to edit the content of the repository
     // https://docs.github.com/en/rest/git/trees?apiVersion=2026-03-10#create-a-tree
     const { sha: tree } = await json(`${baseURL}/git/trees`, {
-      method: 'POST',
       headers,
+      method: 'POST',
       body: `{"tree":[{"path":"data/unproxied/${id
       }.json","mode":"100644","type":"blob","content":${JSON.stringify(text)
       }},{"path":"public/images${suffix}/${id
@@ -96,16 +95,16 @@ export async function POST(req) {
     // Create a commit that uses the tree created above
     // https://docs.github.com/en/rest/git/commits?apiVersion=2026-03-10#create-a-commit
     const { sha } = await json(`${baseURL}/git/commits`, {
-      method: 'POST',
-      headers, // No need to escape sha and id
+      headers,
+      method: 'POST', // No need to escape sha and id
       body: `{"message":"Publish ${id}","tree":"${tree}","parents":["${parent}"]}`,
     }, 'Failed to create a commit.');
 
     // Make the current branch point to the created commit
     // https://docs.github.com/en/rest/git/refs?apiVersion=2026-03-10#update-a-reference
     await http(`${baseURL}/git/refs/${ref}`, {
-      method: 'PATCH',
       headers,
+      method: 'PATCH',
       body: `{"sha":"${sha}"}`, // No need to escape sha
     }, 'Failed to update the ref.');
 
