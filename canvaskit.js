@@ -1,5 +1,5 @@
 // canvaskit-wasm 0.41.0 https://www.npmjs.com/package/canvaskit-wasm
-// (c) 2011 Google Inc. All rights reserved.
+// © 2011 Google Inc. All rights reserved.
 // SPDX-License-Identifier: BSD-3-Clause
 export default await (async function() {
 var u={},da,ha,ka=new Promise((a,b)=>{da=a;ha=b});
