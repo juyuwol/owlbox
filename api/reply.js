@@ -5,7 +5,8 @@ import { readFile } from 'node:fs/promises';
 import CanvasKitInit from 'canvaskit-wasm';
 import { colors, fonts, style } from '../layouts/card.js';
 import { ImageBuilder } from '../src/image.js';
-import { ID_CHARS, KV_KEY, configGitHub, http, json, kv, local, respondError } from '../src/vercel.js';
+import { ID_CHARS, KV_KEY, configGitHub, http, json, kv, local, respondError
+} from '../src/vercel.js';
 import site from '../config.js';
 
 const { suffix } = site;
@@ -59,20 +60,20 @@ export async function POST(req) {
     }, undefined, 2) + '\n';
 
     const { baseURL, headers, branch } = configGitHub();
-    const ref = encodeURIComponent(branch);
+    const ref = `heads/${encodeURIComponent(branch)}`;
     const [
-      { commit: { tree: { sha: baseTree } }, sha: commit },
+      { commit: { tree: { sha: baseTree } }, sha: parent },
       { sha: blob },
     ] = await Promise.all([
       // Get the contents of the last commit
-      // https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
-      json(`${baseURL}/commits/heads/${ref}`, {
+      // https://docs.github.com/en/rest/commits/commits?apiVersion=2026-03-10#get-a-commit
+      json(`${baseURL}/commits/${ref}`, {
         method: 'GET',
         headers,
       }, 'Failed to get the last commit.'),
 
       // Create a blob of the image
-      // https://docs.github.com/en/rest/git/blobs?apiVersion=2022-11-28#create-a-blob
+      // https://docs.github.com/en/rest/git/blobs?apiVersion=2026-03-10#create-a-blob
       json(`${baseURL}/git/blobs`, {
         method: 'POST',
         headers, // No need to escape a base64-encoded string
@@ -81,28 +82,28 @@ export async function POST(req) {
     ]);
 
     // Create a tree to edit the content of the repository
-    // https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#create-a-tree
+    // https://docs.github.com/en/rest/git/trees?apiVersion=2026-03-10#create-a-tree
     const { sha: tree } = await json(`${baseURL}/git/trees`, {
       method: 'POST',
       headers,
-      body: `{"base_tree":"${baseTree // No need to escape sha and id
-      }","tree":[{"mode":"100644","type":"blob","path":"data/unproxied/${id
-      }.json","content":${JSON.stringify(text)
-      }},{"mode":"100644","type":"blob","path":"public/images${suffix}/${id
-      }.png","sha":"${blob}"}]}`,
+      body: `{"tree":[{"path":"data/unproxied/${id
+      }.json","mode":"100644","type":"blob","content":${JSON.stringify(text)
+      }},{"path":"public/images${suffix}/${id
+      }.png","mode":"100644","type":"blob","sha":"${blob
+      }"}],"base_tree":"${baseTree}"}`, // No need to escape sha and id
     }, 'Failed to create a tree.');
 
     // Create a commit that uses the tree created above
-    // https://docs.github.com/en/rest/git/commits?apiVersion=2022-11-28#create-a-commit
+    // https://docs.github.com/en/rest/git/commits?apiVersion=2026-03-10#create-a-commit
     const { sha } = await json(`${baseURL}/git/commits`, {
       method: 'POST',
       headers, // No need to escape sha and id
-      body: `{"message":"Publish ${id}","parents":["${commit}"],"tree":"${tree}"}`,
+      body: `{"message":"Publish ${id}","tree":"${tree}","parents":["${parent}"]}`,
     }, 'Failed to create a commit.');
 
     // Make the current branch point to the created commit
-    // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
-    await http(`${baseURL}/git/refs/heads/${ref}`, {
+    // https://docs.github.com/en/rest/git/refs?apiVersion=2026-03-10#update-a-reference
+    await http(`${baseURL}/git/refs/${ref}`, {
       method: 'PATCH',
       headers,
       body: `{"sha":"${sha}"}`, // No need to escape sha

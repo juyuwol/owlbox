@@ -8,24 +8,24 @@ const STATUS_CODES = {
   500: 'Internal Server Error',
 };
 
+const { env } = process;
 const { timeOffset: offset, timeOffsetMilliseconds: offsetMilliseconds } = site;
 
+export const KV_KEY = env.VERCEL_PROJECT_ID;
 export const ID_CHARS = /^[0-9a-z]{2,}$/;
-export const KV_KEY = process.env.VERCEL_PROJECT_ID;
 
 export function configGitHub() {
   const {
     VERCEL_GIT_COMMIT_REF: branch,
     VERCEL_GIT_REPO_OWNER: owner,
     VERCEL_GIT_REPO_SLUG: repo,
-    GITHUB_TOKEN,
-  } = process.env;
+  } = env;
   const baseURL = `https://api.github.com/repos/${owner}/${repo}`;
   const headers = {
     Accept: 'application/vnd.github+json',
-    Authorization: `Bearer ${GITHUB_TOKEN}`,
+    Authorization: `Bearer ${env.GITHUB_TOKEN}`,
     'User-Agent': site.generator.displayName,
-    'X-GitHub-Api-Version': '2022-11-28',
+    'X-GitHub-Api-Version': '2026-03-10',
   };
   return { baseURL, headers, branch };
 }
@@ -46,10 +46,9 @@ export function json(url, init, message) {
 }
 
 export async function kv(command, message) {
-  const { KV_REST_API_URL, KV_REST_API_TOKEN } = process.env;
-  const res = await http(KV_REST_API_URL, {
+  const res = await http(env.KV_REST_API_URL, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${KV_REST_API_TOKEN}` },
+    headers: { Authorization: `Bearer ${env.KV_REST_API_TOKEN}` },
     body: command,
   }, message, true);
   if ('error' in res) {
@@ -64,7 +63,7 @@ export function local(timestamp) {
 }
 
 export function respondError(status, detail) {
-  const title = STATUS_CODES[status]; // Problem detail defined by RFC 9457
+  const title = STATUS_CODES[status]; // RFC 9457 problem details
   return new Response(JSON.stringify({ status, title, detail }), {
     status,
     headers: {
@@ -79,9 +78,9 @@ export async function updateJSON(path, updates, message, updater) {
   const url = `${baseURL}/contents/${path}`;
 
   // Get the file content and sha
-  // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-repository-content
-  const ref = new URLSearchParams({ ref: branch });
-  const { sha, content } = await json(`${url}?${ref}`, {
+  // https://docs.github.com/en/rest/repos/contents?apiVersion=2026-03-10#get-repository-content
+  const params = new URLSearchParams({ ref: branch });
+  const { sha, content } = await json(`${url}?${params}`, {
     method: 'GET',
     headers,
   }, 'Failed to get the file.');
@@ -90,7 +89,7 @@ export async function updateJSON(path, updates, message, updater) {
   updater(data, updates);
 
   // Update the file content
-  // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
+  // https://docs.github.com/en/rest/repos/contents?apiVersion=2026-03-10#create-or-update-file-contents
   const text = JSON.stringify(data, undefined, 2) + '\n';
   await http(url, {
     method: 'PUT',

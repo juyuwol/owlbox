@@ -1,7 +1,8 @@
 // Copyright 2023 Ju Yuwol <ju@yuwol.pe.kr>
 // SPDX-License-Identifier: Zlib
 
-import { ID_CHARS, configGitHub, http, json, local, respondError, updateJSON } from '../src/vercel.js';
+import { ID_CHARS, configGitHub, http, json, local, respondError, updateJSON
+} from '../src/vercel.js';
 import site from '../config.js';
 
 const { suffix, timeOffset } = site;
@@ -33,40 +34,41 @@ export async function DELETE(req) {
     return respondError(400, error.message);
   }
 
-  const { baseURL, headers, branch } = configGitHub();
-  const ref = encodeURIComponent(branch);
   try {
+    const { baseURL, headers, branch } = configGitHub();
+    const ref = `heads/${encodeURIComponent(branch)}`;
+
     // Get the contents of the last commit
-    // https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
+    // https://docs.github.com/en/rest/commits/commits?apiVersion=2026-03-10#get-a-commit
     const {
       commit: { tree: { sha: baseTree } },
-      sha: commit,
-    } = await json(`${baseURL}/commits/heads/${ref}`, {
+      sha: parent,
+    } = await json(`${baseURL}/commits/${ref}`, {
       method: 'GET',
       headers,
     }, 'Failed to get the last commit.');
 
     // Create a tree to edit the content of the repository
-    // https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#create-a-tree
+    // https://docs.github.com/en/rest/git/trees?apiVersion=2026-03-10#create-a-tree
     const { sha: tree } = await json(`${baseURL}/git/trees`, {
       method: 'POST',
       headers,
-      body: `{"base_tree":"${baseTree // No need to escape sha
-      }","tree":[${ids.reduce(concatTreeEntries, '').slice(1)}]}`,
+      body: `{"tree":[${ids.reduce(concatTreeEntries, '').slice(1)
+      }],"base_tree":"${baseTree}"}`, // No need to escape sha
     }, 'Failed to create a tree.');
 
     // Create a commit that uses the tree created above
-    // https://docs.github.com/en/rest/git/commits?apiVersion=2022-11-28#create-a-commit
+    // https://docs.github.com/en/rest/git/commits?apiVersion=2026-03-10#create-a-commit
     const { sha } = await json(`${baseURL}/git/commits`, {
       method: 'POST',
       headers,
-      body: `{"message":"Delete ${ids.join(', ') // No need to escape id and sha
-      }"},"parents":["${commit}"],"tree":"${tree}"}`,
+      body: `{"message":"Delete ${ids.join(', ')}"},"tree":"${tree
+      }","parents":["${parent}"]}`, // No need to escape id and sha
     }, 'Failed to create a commit.');
 
     // Make the current branch point to the created commit
-    // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#update-a-reference
-    await http(`${baseURL}/git/refs/heads/${ref}`, {
+    // https://docs.github.com/en/rest/git/refs?apiVersion=2026-03-10#update-a-reference
+    await http(`${baseURL}/git/refs/${ref}`, {
       method: 'PATCH',
       headers,
       body: `{"sha":"${sha}"}`, // No need to escape sha
@@ -98,9 +100,9 @@ export async function POST(req) {
     return respondError(400, error.message);
   }
   const timestamp = Date.now();
-  const replied = local(timestamp);
-  const path = `data/unproxied/${id}.json`;
   try {
+    const path = `data/unproxied/${id}.json`;
+    const replied = local(timestamp);
     await updateJSON(path, { replied, reply }, `Update ${id}`, updatePost);
   } catch (error) {
     return respondError(500, error.message);
