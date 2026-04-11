@@ -75,8 +75,9 @@ export async function POST(req) {
       // https://docs.github.com/en/rest/git/blobs?apiVersion=2026-03-10#create-a-blob
       json(`${baseURL}/git/blobs`, {
         headers,
-        method: 'POST', // No need to escape a base64-encoded string
-        body: `{"content":"${Buffer.from(image).toString('base64')}","encoding":"base64"}`,
+        method: 'POST',
+        body: `{"content":"${Buffer.from(image).toString('base64')
+        }","encoding":"base64"}`, // No need to escape a base64-encoded string
       }, 'Failed to create a blob of the image.'),
     ]);
 
@@ -96,8 +97,9 @@ export async function POST(req) {
     // https://docs.github.com/en/rest/git/commits?apiVersion=2026-03-10#create-a-commit
     const { sha } = await json(`${baseURL}/git/commits`, {
       headers,
-      method: 'POST', // No need to escape sha and id
-      body: `{"message":"Publish ${id}","tree":"${tree}","parents":["${parent}"]}`,
+      method: 'POST',
+      body: `{"message":"Publish ${id}","tree":"${tree
+      }","parents":["${parent}"]}`, // No need to escape sha and id
     }, 'Failed to create a commit.');
 
     // Make the current branch point to the created commit

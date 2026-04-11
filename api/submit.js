@@ -78,8 +78,9 @@ export const POST = activated ? async (req) => {
   } catch {
     return respondError(400);
   }
-  try { // No need to escape id
-    const command = `["HSET","${KV_KEY}","${id}",${JSON.stringify(JSON.stringify(post))}]`;
+  try {
+    const command = `["HSET","${KV_KEY}","${id
+    }",${JSON.stringify(JSON.stringify(post))}]`; // No need to escape id
     await kv(command, 'Failed to store the data.');
   } catch (error) {
     console.error(error);
