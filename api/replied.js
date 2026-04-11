@@ -60,7 +60,7 @@ export async function DELETE(req) {
     const { sha } = await json(`${baseURL}/git/commits`, {
       headers,
       method: 'POST',
-      body: `{"message":"Delete ${ids.join(', ')}"},"tree":"${tree
+      body: `{"message":"Delete ${ids.join(', ')}","tree":"${tree
       }","parents":["${parent}"]}`, // No need to escape id and sha
     }, 'Failed to create a commit.');
 
