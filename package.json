@@ -8,6 +8,6 @@
   "type": "module",
   "dependencies": {
     "@vercel/functions": "^3.4.3",
-    "canvaskit-wasm": "^0.41.0"
+    "canvaskit-wasm": "^0.41.1"
   }
 }
