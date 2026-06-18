@@ -22,7 +22,7 @@ export const config = {
 };
 
 export default function middleware(req) {
-  if (new URL(req.url).pathname.charCodeAt(1) !== 0x62) { // b: U+0062
+  if (!(new URL(req.url).pathname.startsWith('b', 1))) {
     return rewrite('/404.html', { status: 404 });
   } else if (req.headers.get('authorization') === CREDENTIALS) {
     return next();
