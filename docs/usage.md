@@ -181,7 +181,7 @@ export const style = {
 
 - Git: 소스 리포지토리에서 소스를 내려받고 수정본을 업로드하기 위해 필요합니다.
 - Vercel 환경과 동일한 버전의 Node.js: 사이트 생성에 사용됩니다. 프로젝트 대시보드의 *Build and Deployment* 메뉴에 들어가면 *Node.js Version* 아래에서 사용 중인 버전을 확인할 수 있습니다.
-- 정적 파일 HTTP 서버 아무거나: 어차피 Node.js가 필수이므로 Node.js로 돌려도 무방합니다. Vercel에서 만든 오픈소스 패키지인 [serve](https://www.npmjs.com/package/serve)가 많이 쓰이는 듯하고, 이 [종속성 없는 싱글 파일 스크립트](https://gist.github.com/ijisol/d07908590c57b6063d3571ed14ab6778)도 무난해 보입니다.
+- 정적 파일 HTTP 서버 아무거나: 어차피 Node.js가 필수이므로 Node.js로 돌려도 무방합니다. npm에 게시된 공개 패키지인 [st](https://github.com/isaacs/st)가 많이 쓰이는 듯합니다.
 
 빌드 커맨드 (프로젝트 루트에서):
 
