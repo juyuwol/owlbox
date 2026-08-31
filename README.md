@@ -50,11 +50,13 @@
 
 ## 라이선스
 
-© 2025 주유월 \<ju@yuwol.pe.kr>
+© 2025 주유월 <<ju@yuwol.pe.kr>>
 
-기본적으로 [zlib 라이선스](LICENSE.txt)를 따릅니다. 일부 코드에는 [BSD Zero Clause 라이선스](LICENSES/0BSD.txt)가 적용됩니다. 각 소스 파일 상단의 주석에서 해당 파일의 라이선스 정보를 확인할 수 있습니다.
+기본적으로 [zlib 라이선스](LICENSE.txt)를 따릅니다. 일부 코드에는 [BSD Zero Clause 라이선스](LICENSES/0BSD.txt)가 적용됩니다. 각 소스 파일 상단의 주석에 해당 파일의 라이선스 정보가 기재되어 있습니다.
 
-포함된 글꼴 소프트웨어의 저작권은 파일명에 '.license'가 덧붙은 인접 파일을 통해 고지됩니다. 별도의 언급이 없다면 소프트웨어가 아닌 파일에는 [CC0 1.0 라이선스](https://creativecommons.org/publicdomain/zero/1.0/)가 적용됩니다.
+포함된 글꼴 소프트웨어의 저작권은 파일명에 '.license'가 덧붙은 인접 파일을 통해 고지됩니다.
+
+별도의 언급이 없다면 소프트웨어가 아닌 파일에는 [CC0 1.0 라이선스](https://creativecommons.org/publicdomain/zero/1.0/)가 적용됩니다.
 
 모든 라이선스의 전문은 [LICENSES 디렉토리](LICENSES/)에 있습니다.
 
